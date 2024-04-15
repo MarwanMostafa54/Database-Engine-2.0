@@ -1,4 +1,4 @@
-package marwan;
+package db2;
 
 /**
  * Hello world!
