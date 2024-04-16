@@ -21,8 +21,10 @@ public class Table implements Serializable {
         File f = new File(this.tablePath);
         if(f.exists()){
             f.mkdir();
+        }
+        Tool.serializeTable(this);
+        Tool.WriteInFile(htblColNameType, strTableName, clusteringKey);
     }
-}
 
     public String getTableName() {
         return tableName;
