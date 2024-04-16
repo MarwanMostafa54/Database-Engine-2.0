@@ -22,7 +22,7 @@ public class AppTest
     }
     public static void main( String[] args ) throws DBAppException{
         System.err.println(Tool.readPageSize("config//DBApp.properties"));
-        String strTableName = "Student";
+        String strTableName = "Students";
         Hashtable htblColNameType = new Hashtable( );
 		htblColNameType.put("id", "java.lang.Integer");
 		htblColNameType.put("name", "java.lang.String");

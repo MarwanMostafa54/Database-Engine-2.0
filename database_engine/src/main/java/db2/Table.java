@@ -67,10 +67,19 @@ public class Table implements Serializable {
         return pageCount;
     }
 
-    public static void deletePage(Page page) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'deletePage'");
+    public void deletePage(Page page) {
+        String fileName = "Tables/" + this.getTableName() + "/"+this.getTableName()+page.getPageID() + ".ser";
+        File file = new File(fileName);
+        try{
+            file.delete(); 
+            page = null;
+            }
+            catch(Exception e){
+                e.printStackTrace();
+			    System.out.println("Failed to delete page.");
+            } 
     }
+
 
 
 

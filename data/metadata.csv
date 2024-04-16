@@ -3,3 +3,6 @@ Table Name, Column Name, Column Type, ClusteringKey, IndexName, IndexType
 Student,gpa,java.lang.double,false,null,null
 Student,name,java.lang.String,false,null,null
 Student,id,java.lang.Integer,true,null,null
+Students,gpa,java.lang.double,false,null,null
+Students,name,java.lang.String,false,null,null
+Students,id,java.lang.Integer,true,null,null

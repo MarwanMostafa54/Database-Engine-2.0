@@ -170,6 +170,11 @@ public class Tool {
         }
         return false;
     }
+
+    public static void deserializeTable(String tableName) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'deserializeTable'");
+    }
     
 
 
