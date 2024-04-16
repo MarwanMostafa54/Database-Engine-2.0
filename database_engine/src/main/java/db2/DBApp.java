@@ -18,13 +18,17 @@ public class DBApp {
 	// this does whatever initialization you would like 
 	// or leave it empty if there is no code you want to 
 	// execute at application startup 
-	public void init( ){
+	public static void init( ){
 		
 		Tool.initializeMetaData();
-		File table = new File("/Tables");
-		if(!table.exists()){
-			table.mkdir();
-		}
+		File dataDir = new File("Tables");
+        if (!dataDir.exists()) {
+            // Create the data directory if it doesn't exist
+            if (!dataDir.mkdirs()) {
+                System.err.println("Failed to create data directory.");
+                return;
+            }
+        }
 	}
 
 
@@ -91,7 +95,7 @@ public class DBApp {
 
 
 	public static void main( String[] args ){
-
+		init();
 	
 	// try{
 	// 		String strTableName = "Student";
