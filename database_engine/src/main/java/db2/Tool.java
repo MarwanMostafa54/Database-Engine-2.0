@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Vector;
 
 public class Tool {
     public static void initializeMetaData() {
@@ -149,4 +150,50 @@ public class Tool {
         return false;
     }
 
+<<<<<<< HEAD
+=======
+    public static boolean checkKey(String strClusteringKeyColumn, Hashtable<String, String> htblColNameType) {
+        return htblColNameType.containsKey(strClusteringKeyColumn);
+    }
+
+    public static boolean isTableUnique(String strTableName) throws DBAppException {
+        try (BufferedReader reader = new BufferedReader(new FileReader("data//metadata.csv"))) {
+            String line;
+            boolean isFirstLine = true;
+
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+                String existingTableName = data[0];
+                if (existingTableName.equals(strTableName)) {
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (FileNotFoundException e) {
+            System.out.println("Metadata file cannot be located.");
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Error reading from Metadata file.");
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+    
+    public static boolean checkApplicable(String ClassType) {
+        Vector<String> datatype = new Vector<String>();
+        datatype.add("java.lang.Integer");
+        datatype.add("java.lang.String");
+        datatype.add("java.lang.Double");
+        String classTypeLower = ClassType.toLowerCase();
+        for (String possible : datatype) {
+            if ((possible.toLowerCase()).equals(classTypeLower)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+>>>>>>> e0461414cfa2f27de51c718e842cb444a7867a3a
 }

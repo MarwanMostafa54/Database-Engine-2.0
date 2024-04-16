@@ -20,8 +20,7 @@ public class AppTest
     {
         assertTrue( true );
     }
-
-    public static void main( String[] args ){
+    public static void main( String[] args ) throws DBAppException{
         System.err.println(Tool.readPageSize("config//DBApp.properties"));
         String strTableName = "Student";
         Hashtable<String, String> htblColNameType = new Hashtable<>();
@@ -35,12 +34,6 @@ public class AppTest
             System.err.println(e.getMessage());
         }
     }
-    public static void createTable(String strTableName, String strClusteringKeyColumn,
-			Hashtable<String, String> htblColNameType) throws DBAppException {
-
-		if (Tool.isTableUnique(strTableName)) {
-			Table table = new Table(strTableName, strClusteringKeyColumn, htblColNameType, null);
-		}
-
-	}
+  
+    
 }
