@@ -8,20 +8,20 @@ public class Page implements Serializable {
     private Vector<Tuple> tuples;
     private int tupleId;
     private int N;
-	private int PageId;
+	//private int PageId;
     public Page(int PageId){
         tupleId=1;
         tuples = new Vector<Tuple>();
-        this.PageId=PageId;
+        //this.PageId=PageId;
         N = Tool.readPageSize("config//DBApp.properties");
     }
     
     public int getN() {
         return N;
     }
-    public int getPageID() {
-        return PageId;
-    }
+    // public int getPageID() {
+    //     return PageId;
+    // }
     
     public int getTupleID() {
         return tupleId;

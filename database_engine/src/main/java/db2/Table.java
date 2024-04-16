@@ -90,9 +90,9 @@ public class Table implements Serializable {
         return p;
     }
 
-    public void deletePage(Page page) {
-        System.out.println(page.getPageID());
-        String fileName = "Tables/" + this.getTableName() + "/"+this.getTableName()+page.getPageID() + ".ser";
+    public void deletePage(int PageId) {
+        String fileName = "Tables/" + this.getTableName() + "/"+this.getTableName()+PageId + ".ser";
+        Page page=Tool.deserializePage(this, PageId);
         File file = new File(fileName);
         try{
             file.delete(); 
