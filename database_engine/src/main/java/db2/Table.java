@@ -46,6 +46,7 @@ public class Table implements Serializable {
                 }
                 Tool.serializeTable(this);
                 Tool.WriteInFile(htblColNameType, strTableName, clusteringKey);
+                this.columns.put(clusteringKey,new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
             }
             else {
                 throw new DBAppException("Table Name already exists");
@@ -72,7 +73,7 @@ public class Table implements Serializable {
     public Hashtable<String, bplustree> getColumns() {
         return columns;
     }
-    
+
     public void addColumn(String columnName, bplustree tree) {
         columns.put(columnName, tree);
     }
