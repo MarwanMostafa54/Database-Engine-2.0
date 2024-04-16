@@ -3,11 +3,13 @@ package db2;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.util.Hashtable;
@@ -65,7 +67,7 @@ public class Tool {
     public static void serializeTable(Table T) {
         try {
 
-            String path = "Tables/" + T.getTableName() + "_Properties" + ".ser";
+            String path = "Tables/" + T.getTableName() + "/"+T.getTableName()+"_Properties" + ".ser";
             path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
             File file = new File(path);
             FileOutputStream fileAccess;
@@ -77,6 +79,56 @@ public class Tool {
             System.out.println("Failed to serialize table.");
         }
     }
+
+    public static Table deserializeTable(String tableName) {
+        Table table = null;
+        try {
+            String path = "Tables/" + tableName + "/" + tableName + "_Properties.ser";
+            path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
+            FileInputStream fileAccess = new FileInputStream(path);
+            ObjectInputStream objectAccess = new ObjectInputStream(fileAccess);
+            table = (Table) objectAccess.readObject();
+            objectAccess.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Failed to deserialize table.");
+        }
+        return table;
+    }
+    
+
+    public static void serializePage(Table T,Page P) {
+        try {
+            String path = "Tables/" + T.getTableName() + "/"+T.getTableName()+T.getPageCount() + ".ser";
+            path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
+            File file = new File(path);
+            FileOutputStream fileAccess;
+            fileAccess = new FileOutputStream(file);
+            ObjectOutputStream objectAccess = new ObjectOutputStream(fileAccess);
+            objectAccess.writeObject(P);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Failed to serialize table.");
+        }
+    }
+
+    public static Page deserializePage(Table T, int pageNumber) {
+        Page page = null;
+        try {
+            String path = "Tables/" + T.getTableName() + "/" + T.getTableName() + pageNumber + ".ser";
+            path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
+            FileInputStream fileAccess = new FileInputStream(path);
+            ObjectInputStream objectAccess = new ObjectInputStream(fileAccess);
+            page = (Page) objectAccess.readObject();
+            objectAccess.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Failed to deserialize page.");
+        }
+        return page;
+    }
+    
+
 
     public static void WriteInFile(Hashtable<String, String> htblColNameType, String strTableName,
             String strClusteringKeyColumn) {
