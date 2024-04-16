@@ -403,7 +403,61 @@ public class Tool {
         return resultTuples;
     }
 
-    private static boolean checkCondition(String columnValue, String operator, Object value) {
-        return false;
+    public static boolean checkCondition(String columnValue, String operator, Object value) throws IllegalArgumentException {
+        // if( columnValue != value)
+        //     throw new IllegalArgumentException("Invalid argument" + value); 
+        switch (operator) {
+            case "=":
+            if (value instanceof String) {
+                return columnValue.equals(value.toString());                
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue == numericValue;
+            }
+            case "!=":
+            if (value instanceof String) {
+                return !columnValue.equals(value.toString());                
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue != numericValue;
+            }
+            case ">":
+            if (value instanceof String) {
+                return columnValue.compareTo(value.toString()) > 0;               
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue > numericValue;
+            }
+            case ">=":
+            if (value instanceof String) {
+                return columnValue.compareTo(value.toString()) >= 0;               
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue >= numericValue;
+            }
+            case "<":
+            if (value instanceof String) {
+                return columnValue.compareTo(value.toString()) < 0;               
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue < numericValue;
+            }
+            case "<=":
+            if (value instanceof String) {
+                return columnValue.compareTo(value.toString()) <= 0;               
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue <= numericValue;
+            }
+            default:
+                throw new IllegalArgumentException("Invalid operator: " + operator);
+        }
+    
     }
 }
