@@ -150,8 +150,6 @@ public class Tool {
         return false;
     }
 
-<<<<<<< HEAD
-=======
     public static boolean checkKey(String strClusteringKeyColumn, Hashtable<String, String> htblColNameType) {
         return htblColNameType.containsKey(strClusteringKeyColumn);
     }
@@ -195,5 +193,4 @@ public class Tool {
         return false;
     }
     
->>>>>>> e0461414cfa2f27de51c718e842cb444a7867a3a
 }
