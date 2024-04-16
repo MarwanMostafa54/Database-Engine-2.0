@@ -19,7 +19,7 @@ public class DBApp {
 	// execute at application startup 
 	public void init( ){
 		
-		
+		Tool.initializeMetaData();
 	}
 
 
