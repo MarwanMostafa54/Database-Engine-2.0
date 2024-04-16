@@ -23,17 +23,12 @@ public class AppTest
     public static void main( String[] args ) throws DBAppException{
         System.err.println(Tool.readPageSize("config//DBApp.properties"));
         String strTableName = "Student";
-        Hashtable<String, String> htblColNameType = new Hashtable<>();
-        htblColNameType.put("id", "java.lang.Integer");
-        htblColNameType.put("name", "java.lang.String");
-        htblColNameType.put("gpa", "java.lang.double");
-        
-        try {
-            createTable(strTableName, "id", htblColNameType);
-        } catch (DBAppException e) {
-            System.err.println(e.getMessage());
-        }
+        Hashtable htblColNameType = new Hashtable( );
+		htblColNameType.put("id", "java.lang.Integer");
+		htblColNameType.put("name", "java.lang.String");
+		htblColNameType.put("gpa", "java.lang.double");
+        File dataDir = new File("Tables");
+		Table t=new Table(strTableName, "id", htblColNameType, "Tables");
     }
-  
     
 }

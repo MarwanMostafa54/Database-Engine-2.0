@@ -29,7 +29,7 @@ public class Table implements Serializable {
                 this.tableName = strTableName;
                  this.clusterKey = clusteringKey;
                 this.pageCount = 0;
-                this.tablePath = "./Tables/" + strTableName;
+                this.tablePath = "Tables/" + strTableName;
                 File f = new File(this.tablePath);
                 if(f.exists()){
                     f.mkdir();

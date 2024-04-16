@@ -64,7 +64,8 @@ public class Tool {
 
     public static void serializeTable(Table T) {
         try {
-            String path = "./Tables/" + T.getTableName() + "_Properties" + ".ser";
+
+            String path = "Tables/" + T.getTableName() + "_Properties" + ".ser";
             path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
             File file = new File(path);
             FileOutputStream fileAccess;
@@ -88,7 +89,7 @@ public class Tool {
             }
         }
 
-        String filePath = "data/metadata.csv"; // Use the same directory structure
+        String filePath = "data/metadata.csv"; 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
             for (Map.Entry<String, String> entry : htblColNameType.entrySet()) {
                 String key = entry.getKey();
@@ -150,6 +151,7 @@ public class Tool {
         return false;
     }
 
+
     public static boolean checkKey(String strClusteringKeyColumn, Hashtable<String, String> htblColNameType) {
         return htblColNameType.containsKey(strClusteringKeyColumn);
     }
@@ -169,6 +171,6 @@ public class Tool {
         return false;
     }
     
-    
+
 
 }
