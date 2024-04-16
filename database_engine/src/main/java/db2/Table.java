@@ -76,14 +76,15 @@ public class Table implements Serializable {
     public int getPageCount() {
         return pageCount;
     }
-    public void addPage(){
+    public void CreateNewPage(){
         Tool.deserializeTable(this.getTableName());
-        Page p = new Page();       
+        Page p = new Page(); 
+        System.out.println("New Page Created");
+        this.pageCount++;    
         Tool.serializePage(this,p);
         Tool.serializeTable(this);
-        pageCount++;
     }
-    
+
     public void deletePage(Page page) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'deletePage'");

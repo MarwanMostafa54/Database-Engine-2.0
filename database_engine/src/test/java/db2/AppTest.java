@@ -36,6 +36,9 @@ public class AppTest
 		htblColNameType.put("gpa", "java.lang.double");
          dataDir = new File("Tables");
 		Table t2=new Table(strTableName, "id", htblColNameType, "Tables");
+        t2.CreateNewPage();
+        t2.CreateNewPage();
+        t2.CreateNewPage();
     }
     
 }

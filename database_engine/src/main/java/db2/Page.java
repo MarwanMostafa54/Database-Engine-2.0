@@ -1,9 +1,10 @@
 package db2;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Vector;
 
-public class Page {
+public class Page implements Serializable {
     private Vector<Tuple> tuples;
     private int tupleId;
     private int N;
@@ -46,8 +47,6 @@ public class Page {
 	{
 		 tuples.remove(index);
 		 tupleId--;
-		 if(tupleId<1)
-		 	Table.deletePage(this);	
 	}
 
 
