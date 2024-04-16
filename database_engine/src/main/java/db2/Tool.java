@@ -154,30 +154,6 @@ public class Tool {
         return htblColNameType.containsKey(strClusteringKeyColumn);
     }
 
-    public static boolean isTableUnique(String strTableName) throws DBAppException {
-        try (BufferedReader reader = new BufferedReader(new FileReader("data//metadata.csv"))) {
-            String line;
-            boolean isFirstLine = true;
-
-            while ((line = reader.readLine()) != null) {
-                String[] data = line.split(",");
-                String existingTableName = data[0];
-                if (existingTableName.equals(strTableName)) {
-                    return false;
-                }
-            }
-
-            return true;
-        } catch (FileNotFoundException e) {
-            System.out.println("Metadata file cannot be located.");
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("Error reading from Metadata file.");
-            e.printStackTrace();
-        }
-
-        return false;
-    }
     
     public static boolean checkApplicable(String ClassType) {
         Vector<String> datatype = new Vector<String>();
@@ -193,4 +169,6 @@ public class Tool {
         return false;
     }
     
+    
+
 }
