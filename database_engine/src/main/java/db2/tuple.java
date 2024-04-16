@@ -2,25 +2,25 @@ package db2;
 import java.io.Serializable;
 import java.util.Hashtable;
 public class Tuple implements Serializable {
-    private Hashtable<String,String> record;
+    private Hashtable<String,String> tuple;
     private String hashValue;
     public Tuple(){
-        this.record = new Hashtable<>();
+        this.tuple = new Hashtable<>();
     }
 
-public Tuple(Hashtable<String, Object> record,String hashValue){
-    this.record = new Hashtable<>();
-    for (String key : record.keySet())
-        this.record.put(key, record.get(key).toString());
+public Tuple(Hashtable<String, Object> tuple,String hashValue) {
+    this.tuple = new Hashtable<>();
+    for (String key : tuple.keySet())
+        this.tuple.put(key, tuple.get(key).toString());
         this.hashValue = hashValue;
     
 }
 public String getValue(String column){
-    return record.getOrDefault(column, null);
+    return tuple.getOrDefault(column, null);
 }
 
 public int hashCode(){
-    return record.get(hashValue).hashCode();
+    return tuple.get(hashValue).hashCode();
 }
 
 }
