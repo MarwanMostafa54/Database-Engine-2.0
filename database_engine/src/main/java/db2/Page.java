@@ -9,9 +9,10 @@ public class Page implements Serializable {
     private int tupleId;
     private int N;
 	private int PageId;
-    public Page(){
+    public Page(int PageId){
         tupleId=1;
         tuples = new Vector<Tuple>();
+        this.PageId=PageId;
         N = Tool.readPageSize("config//DBApp.properties");
     }
     
@@ -47,10 +48,13 @@ public class Page implements Serializable {
 		return tuples.get(index);
 	}
 
-	public void deleteTuple(int index) throws IOException
+	public void deleteTuple(int index,Table t) throws IOException
 	{
 		 tuples.remove(index);
 		 tupleId--;
+         if(tupleId<1){
+            t.deletePage(this);
+         }
 			
 	}
 

@@ -13,7 +13,7 @@ public class Table implements Serializable {
     public Hashtable<String, bplustree> columns;
     public int pageCount;
     
-    public Table(String strTableName, String clusteringKey, Hashtable<String, String> htblColNameType, String MetaPath) throws DBAppException{
+    public Table(String strTableName, String clusteringKey, Hashtable<String, String> htblColNameType) throws DBAppException{
         if (!Tool.checkKey(clusteringKey, htblColNameType)) {
             throw new DBAppException("Invalid Selected Clustering Column");
         } else {
@@ -76,21 +76,25 @@ public class Table implements Serializable {
     public int getPageCount() {
         return pageCount;
     }
-    public void CreateNewPage(){
+    public Page CreateNewPage(){
         Tool.deserializeTable(this.getTableName());
-        Page p = new Page(); 
-        System.out.println("New Page Created");
-        this.pageCount++;    
+        Page p = new Page(++pageCount); 
+        System.out.println("New Page Created");  
         Tool.serializePage(this,p);
         Tool.serializeTable(this);
+        return p;
     }
 
     public void deletePage(Page page) {
+        System.out.println(page.getPageID());
         String fileName = "Tables/" + this.getTableName() + "/"+this.getTableName()+page.getPageID() + ".ser";
         File file = new File(fileName);
         try{
             file.delete(); 
             page = null;
+            pageCount--;
+            System.out.println("Page Delete");
+            Tool.serializeTable(this);
             }
             catch(Exception e){
                 e.printStackTrace();

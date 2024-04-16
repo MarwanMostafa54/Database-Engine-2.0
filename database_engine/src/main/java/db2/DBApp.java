@@ -35,13 +35,9 @@ public class DBApp {
 	// be passed in htblColNameType
 	// htblColNameValue will have the column name as key and the data
 	// type as value
-	public void createTable(String strTableName, String strClusteringKeyColumn,
+	public  void createTable(String strTableName, String strClusteringKeyColumn,
 			Hashtable<String, String> htblColNameType) throws DBAppException {
-
-		if (Tool.isTableUnique(strTableName)) {
-			Table table = new Table(strTableName, strClusteringKeyColumn, htblColNameType, null);
-		}
-
+			Table table = new Table(strTableName, strClusteringKeyColumn, htblColNameType);
 	}
 
 	// following method creates a B+tree index
