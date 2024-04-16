@@ -21,6 +21,7 @@ public class DBApp {
 	public static void init( ){
 		
 		Tool.initializeMetaData();
+		Tool.initializeProperties();
 		File dataDir = new File("Tables");
         if (!dataDir.exists()) {
             // Create the data directory if it doesn't exist

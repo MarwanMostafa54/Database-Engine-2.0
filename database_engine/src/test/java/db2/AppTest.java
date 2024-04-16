@@ -17,4 +17,7 @@ public class AppTest
     {
         assertTrue( true );
     }
+    public static void main( String[] args ){
+        System.err.println(Tool.readPageSize("config//DBApp.properties"));
+    }
 }
