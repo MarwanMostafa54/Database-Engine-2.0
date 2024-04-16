@@ -107,6 +107,14 @@ public class Table implements Serializable {
             } 
     }
 
+    public void insertTupleIntoLastPage(){
+
+    }
+
+    public void deleteTuple(){
+        
+    }
+
 
 
 

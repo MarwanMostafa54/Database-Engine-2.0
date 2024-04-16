@@ -95,23 +95,34 @@ public class DBApp {
 	// htblColNameValue holds the key and new value
 	// htblColNameValue will not include clustering key as column name
 	// strClusteringKeyValue is the value to look for to find the row to update.
-	public void updateTable(String strTableName,
+	public void updateTable(String strTableName, //suspicious
 			String strClusteringKeyValue,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
 				try{
 					Table table = Tool.deserializeTable(strTableName);
+					int key = strClusteringKeyValue.hashCode();
+					Double temp = table.getColumns().get(table.clusterKey).search(key);
+					if(temp != null){
+						String encoder = temp + "" ;
+						String[] data = encoder.split(".");
+						int pageID = Integer.parseInt(data[0]);
+						int tupleID = Integer.parseInt(data[1]);
+						Page p = Tool.deserializePage(table, pageID);
+						Tuple t = p.getTuple(tupleID);
+						// Update the specified columns with the new values
+						for (String columnName : htblColNameValue.keySet()) {
+							t.setValue(columnName, htblColNameValue.get(columnName).toString());
+						}
+						Tool.serializePage(table, p);
+					}
+					 else {
+						throw new DBAppException("Tuple with clustering key value '" + strClusteringKeyValue + "' not found.");
+					}
 				}
 				
 				catch (Exception e) {
 					throw new DBAppException("Error updating table: " + e.getMessage());
 				}
-
-				
-
-
-		
-			
-		throw new DBAppException("not implemented yet");
 	}
 
 	// following method could be used to delete one or more rows.
