@@ -98,8 +98,18 @@ public class DBApp {
 	public void updateTable(String strTableName,
 			String strClusteringKeyValue,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
+				try{
+					Table table = Tool.deserializeTable(strTableName);
+				}
+				
+				catch (Exception e) {
+					throw new DBAppException("Error updating table: " + e.getMessage());
+				}
 
-		throw new DBAppException("not implemented yet");
+				
+
+
+		
 	}
 
 	// following method could be used to delete one or more rows.
