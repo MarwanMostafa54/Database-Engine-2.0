@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 public class Tool {
     public static void initializeMetaData() {
         File metadata = new File("data//metadata.csv");
-    
+        if(!metadata.exists()){
         if (metadata.length() == 0) {
             try (PrintWriter writer = new PrintWriter(new FileWriter(metadata, true))) {
                 writer.println("Table Name, Column Name, Column Type, ClusteringKey, IndexName,IndexType");
@@ -16,6 +16,7 @@ public class Tool {
                 e.printStackTrace();
                 System.out.println("Problem with writing table info");
             }
+        }
         }
     }
 }
