@@ -76,6 +76,13 @@ public class Table implements Serializable {
     public int getPageCount() {
         return pageCount;
     }
+    public void addPage(){
+        Tool.deserializeTable(this.getTableName());
+        Page p = new Page();       
+        Tool.serializePage(this,p);
+        Tool.serializeTable(this);
+        pageCount++;
+    }
     
     public void deletePage(Page page) {
         // TODO Auto-generated method stub
