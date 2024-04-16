@@ -1,7 +1,9 @@
 package db2;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -34,8 +36,7 @@ public class Tool {
             }
         }
     }
-    
-    
+
     public static void initializeProperties() {
         File configFile = new File("config/DBApp.properties");
         if (configFile.exists()) {
@@ -59,25 +60,24 @@ public class Tool {
             System.out.println("Failed to write properties file: " + e.getMessage());
         }
     }
-    
 
     public static void serializeTable(Table T) {
-		try {
-			String path =  "./Tables/" + T.getTableName()+"_Properties" + ".ser";
-            path = path.replaceAll("[^a-zA-Z0-9()_./+]","");
-			File file = new File(path); 
-			FileOutputStream fileAccess;
-			fileAccess = new FileOutputStream(file);
-			ObjectOutputStream objectAccess = new ObjectOutputStream(fileAccess);
-			objectAccess.writeObject(T);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("Failed to serialize table.");
-		}
-	}
+        try {
+            String path = "./Tables/" + T.getTableName() + "_Properties" + ".ser";
+            path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
+            File file = new File(path);
+            FileOutputStream fileAccess;
+            fileAccess = new FileOutputStream(file);
+            ObjectOutputStream objectAccess = new ObjectOutputStream(fileAccess);
+            objectAccess.writeObject(T);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Failed to serialize table.");
+        }
+    }
 
-
-    public static void WriteInFile(Hashtable<String, String> htblColNameType, String strTableName, String strClusteringKeyColumn) {
+    public static void WriteInFile(Hashtable<String, String> htblColNameType, String strTableName,
+            String strClusteringKeyColumn) {
         File dataDir = new File("data");
         if (!dataDir.exists()) {
             // Create the data directory if it doesn't exist
@@ -86,7 +86,7 @@ public class Tool {
                 return;
             }
         }
-    
+
         String filePath = "data/metadata.csv"; // Use the same directory structure
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
             for (Map.Entry<String, String> entry : htblColNameType.entrySet()) {
@@ -101,22 +101,52 @@ public class Tool {
             e.printStackTrace();
         }
     }
-    
 
     public static int readPageSize(String path) {
-		try{
-			FileReader reader =new FileReader(path);
-			Properties p = new Properties();
-			p.load(reader);
-			String theNum = p.getProperty("MaximumRowsCountinPage");
-			return Integer.parseInt(theNum);}
+        try {
+            FileReader reader = new FileReader(path);
+            Properties p = new Properties();
+            p.load(reader);
+            String theNum = p.getProperty("MaximumRowsCountinPage");
+            return Integer.parseInt(theNum);
+        }
 
-		catch(IOException E){
-			E.printStackTrace();
-			System.out.println("Error reading properties");
-		}
-		return 0;
-	}
+        catch (IOException E) {
+            E.printStackTrace();
+            System.out.println("Error reading properties");
+        }
+        return 0;
+    }
 
-    
+    public static boolean isTableUnique(String strTableName) throws DBAppException {
+        try (BufferedReader reader = new BufferedReader(new FileReader("data//metadata.csv"))) {
+            String line;
+            boolean isFirstLine = true;
+
+            while ((line = reader.readLine()) != null) {
+                if (isFirstLine) { // Skip the first line (header)
+                    isFirstLine = false;
+                    continue;
+                }
+
+                String[] data = line.split(",");
+                String existingTableName = data[0];
+
+                if (existingTableName.equals(strTableName)) {
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (FileNotFoundException e) {
+            System.out.println("Metadata file cannot be located.");
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Error reading from Metadata file.");
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
 }

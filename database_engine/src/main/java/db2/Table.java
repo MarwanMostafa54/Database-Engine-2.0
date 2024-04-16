@@ -50,5 +50,10 @@ public class Table implements Serializable {
         return pageCount;
     }
 
+    public static void deletePage(Page page) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'deletePage'");
+    }
+
 
 }
