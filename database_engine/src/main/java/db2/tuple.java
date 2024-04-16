@@ -10,10 +10,9 @@ public class Tuple implements Serializable {
 
 public Tuple(Hashtable<String, Object> tuple,String hashValue) {
     this.tuple = new Hashtable<>();
-    for (String key : tuple.keySet())
-        this.tuple.put(key, tuple.get(key).toString());
-        this.hashValue = hashValue;
-    
+    for (String key : tuple.keySet()){
+        this.tuple.put(key, tuple.get(key).toString());}
+    this.hashValue = hashValue;
 }
 public String getValue(String column){
     return tuple.getOrDefault(column, null);

@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
@@ -224,5 +225,150 @@ public class Tool {
         return table;
     }
 
+    public static ArrayList<String[]> readMetaData(String strTableName) {
+
+		try {
+			String line = "";
+			ArrayList<String[]> metaData= new ArrayList<String[]>();
+
+			BufferedReader file = new BufferedReader(new FileReader("data//metadata.csv"));
+			while ((line = file.readLine()) != null) {
+				String[] data = line.split(",");
+				if(data[0].equals(strTableName))
+				{
+					metaData.add(data);
+				}
+			}
+			file.close();
+			return metaData;
+		}
+		catch(Exception E) {
+			System.out.println("Table non existent");
+			return null;
+		}
+	}
+	public static Hashtable<String, String> gethtblColNameType(ArrayList<String[]> metaDataTable)
+	{
+		Hashtable<String,String> columnNameAndType=new Hashtable<String,String>();
+		for(String[] column: metaDataTable)
+		{
+			String columnName=column[1];
+			String columnType=column[2];
+			columnNameAndType.put(columnName, columnType);
+		}
+		return columnNameAndType;
+	}
+	public static String[] determineClusteringKey(ArrayList<String[]> metaDataTable)
+	{
+		String[] indexAndValue= new String[2];
+		for (int i = 0; i < metaDataTable.size(); i++) {
+			String[] array= metaDataTable.get(i);
+			if(array[3].equals("True"))
+			{
+				indexAndValue[0]=array[1];
+				indexAndValue[1]=i+"";
+			}
+		}
+		return indexAndValue;
+	}
+
+    public static int readBtreeOrder(String path) {
+        try{
+			FileReader reader =new FileReader(path);
+			Properties p = new Properties();
+			p.load(reader);
+			String theNum = p.getProperty("NodeSize");
+			return Integer.parseInt(theNum);}
+
+		catch(IOException E){
+			E.printStackTrace();
+			System.out.println("Error reading properties");
+		}
+		return 0;
+    }
+
+    public static boolean checker(ArrayList<String[]> metaData, String strColName) {
+        for (String[] data : metaData) {
+            if (data[2].equals(strColName)) {
+                return true; // Column name exists in metadata
+            }
+        }
+        return false; // Column name does not exist in metadata
+    }
+
+    public static void updateMetaData(String strTableName, String indxCol,String strIndexName){
+        ArrayList<String[]> metaData= new ArrayList<String[]>();
+        try {
+            String line = "";
+
+            BufferedReader read = new BufferedReader(new FileReader("data//metadata.csv"));
+            while ((line = read.readLine()) != null) {
+                String[] data = line.split(",");
+                if(data[0].equals(strTableName) && data[1].equals(indxCol))
+                {
+                    data[4]=strIndexName;
+                    data[5]="Btree";
+                }
+                metaData.add(data);
+            }
+            read.close();
+        }
+
+        catch(Exception E) {
+            System.out.println("Failed to read from metadata.csv!");
+        }
+        try {
+            PrintWriter write = new PrintWriter(new FileWriter("data//metadata.csv", false));
+            write.append("Table Name");
+            write.append(",");
+            write.append("Column Name");
+            write.append(",");
+            write.append("Column Type");
+            write.append(",");
+            write.append("ClusteringKey");
+            write.append(",");
+            write.append("IndexName");
+            write.append(",");
+            write.append("IndexType");
+            write.append("\n");
+            write.flush();
+            write.close();
+        }
+        catch(IOException E) {
+            E.printStackTrace();
+            System.out.println("problem with writing table info");
+        }
+        try {
+            PrintWriter write = new PrintWriter(new FileWriter("data//metadata.csv", true));
+            for (int i = 1; i < metaData.size(); i++) {
+                String[] temp= metaData.get(i);
+                write.append(temp[0]);
+                write.append(",");
+
+                write.append(temp[1]);
+                write.append(",");
+
+                write.append(temp[2]);
+                write.append(",");
+
+                write.append(temp[3]);
+                write.append(",");
+
+                write.append(temp[4]);
+                write.append(",");
+
+                write.append(temp[5]);
+                write.append("\n");
+            }
+            write.flush();
+            write.close();
+        }
+
+        catch(Exception E) {
+            System.out.println("Failed to update metadata.csv!");
+            E.printStackTrace();
+        }
+    }
 
 }
+

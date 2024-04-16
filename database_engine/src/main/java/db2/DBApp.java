@@ -4,6 +4,9 @@ package db2;
 
 import java.util.Iterator;
 import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Hashtable;
 
 public class DBApp {
@@ -42,11 +45,43 @@ public class DBApp {
 
 	// following method creates a B+tree index
 	public void createIndex(String strTableName,
-			String strColName,
-			String strIndexName) throws DBAppException {
+		String strColName,
+		String strIndexName) throws DBAppException, IOException {
+		ArrayList<String[]> metaData = Tool.readMetaData(strTableName);
+		if (!Tool.isTableUnique(strTableName)) {
+				if(!Tool.checker(metaData,strColName)){
+					throw new DBAppException("Column " + strColName + "  name does not exist");}
+				
+				else{
+				Table t= Tool.deserializeTable(strTableName);
+				if (t.columns.containsKey(strColName)) {
+					throw new DBAppException("Column " + strColName + " index already created.");}
 
-		throw new DBAppException("not implemented yet");
+				t.addColumn(strColName, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));	
+				for (int i = 0; i < t.getPageCount(); i++) {	
+					Page p= Tool.deserializePage(t,i);
+					int j=0;
+					for (Tuple tuple : p.getTuples()) {
+						int key = tuple.getValue(strColName).hashCode();
+						j++;
+						String temp=i+"."+j;
+						BigDecimal number = new BigDecimal(temp);
+						Double encoder=number.doubleValue();
+						if(t.getColumns().get(strColName).search(key)!=null){
+							
+						}
+						else{
+						t.getColumns().get(strColName).insert(key, encoder);}
+					}
+				}
+				
+			}
+		}
+		else {
+			throw new DBAppException("Table is not Found in Meta Data");
+		}
 	}
+	
 
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key

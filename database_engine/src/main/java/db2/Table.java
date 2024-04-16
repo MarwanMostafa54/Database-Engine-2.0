@@ -72,6 +72,10 @@ public class Table implements Serializable {
     public Hashtable<String, bplustree> getColumns() {
         return columns;
     }
+    
+    public void addColumn(String columnName, bplustree tree) {
+        columns.put(columnName, tree);
+    }
 
     public int getPageCount() {
         return pageCount;

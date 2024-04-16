@@ -39,7 +39,7 @@ public class AppTest
 		Table t2=new Table(strTableName, "id", htblColNameType);
         t2.CreateNewPage();
         t2.CreateNewPage();
-        t2.deletePage(t2.CreateNewPage());
+         Tool.updateMetaData("strTableName", "gpa","gpaIndex" );
 
     }
     
