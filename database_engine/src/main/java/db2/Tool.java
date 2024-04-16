@@ -80,21 +80,7 @@ public class Tool {
         }
     }
 
-    public static Table deserializeTable(String tableName) {
-        Table table = null;
-        try {
-            String path = "Tables/" + tableName + "/" + tableName + "_Properties.ser";
-            path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
-            FileInputStream fileAccess = new FileInputStream(path);
-            ObjectInputStream objectAccess = new ObjectInputStream(fileAccess);
-            table = (Table) objectAccess.readObject();
-            objectAccess.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Failed to deserialize table.");
-        }
-        return table;
-    }
+   
     
 
     public static void serializePage(Table T,Page P) {
@@ -221,6 +207,11 @@ public class Tool {
             }
         }
         return false;
+    }
+
+    public static void deserializeTable(String tableName) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'deserializeTable'");
     }
     
 

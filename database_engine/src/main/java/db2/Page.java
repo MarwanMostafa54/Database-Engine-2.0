@@ -8,6 +8,7 @@ public class Page implements Serializable {
     private Vector<Tuple> tuples;
     private int tupleId;
     private int N;
+	private int PageId;
     public Page(){
         tupleId=1;
         tuples = new Vector<Tuple>();
@@ -16,6 +17,9 @@ public class Page implements Serializable {
     
     public int getN() {
         return N;
+    }
+    public int getPageID() {
+        return PageId;
     }
     
     public int getTupleID() {
@@ -47,7 +51,10 @@ public class Page implements Serializable {
 	{
 		 tuples.remove(index);
 		 tupleId--;
+			
 	}
+
+	
 
 
 }
