@@ -65,7 +65,7 @@ public class Tool {
     public static void serializeTable(Table T) {
         try {
 
-            String path = "Tables/" + T.getTableName() + "_Properties" + ".ser";
+            String path = "Tables/" + T.getTableName() + "/"+T.getTableName()+"_Properties" + ".ser";
             path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
             File file = new File(path);
             FileOutputStream fileAccess;
@@ -77,6 +77,23 @@ public class Tool {
             System.out.println("Failed to serialize table.");
         }
     }
+
+    public static void serializePage(Table T,Page P) {
+        try {
+            String path = "Tables/" + T.getTableName() + "/"+T.getTableName()+T.getPageCount() + ".ser";
+            path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
+            File file = new File(path);
+            FileOutputStream fileAccess;
+            fileAccess = new FileOutputStream(file);
+            ObjectOutputStream objectAccess = new ObjectOutputStream(fileAccess);
+            objectAccess.writeObject(P);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Failed to serialize table.");
+        }
+    }
+
+    
 
     public static void WriteInFile(Hashtable<String, String> htblColNameType, String strTableName,
             String strClusteringKeyColumn) {

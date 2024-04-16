@@ -30,9 +30,19 @@ public class Table implements Serializable {
                  this.clusterKey = clusteringKey;
                 this.pageCount = 0;
                 this.tablePath = "Tables/" + strTableName;
-                File f = new File(this.tablePath);
-                if(f.exists()){
-                    f.mkdir();
+                File dataDir = new File("Tables");
+                if (!dataDir.exists()) {
+                    if (!dataDir.mkdirs()) {
+                        System.err.println("Failed to create data directory.");
+                        return;
+                    }
+                }
+                File f = new File(dataDir, strTableName);
+                if (!f.exists()) {
+                    if (!f.mkdirs()) {
+                        System.err.println("Failed to create data directory.");
+                        return;
+                    }
                 }
                 Tool.serializeTable(this);
                 Tool.WriteInFile(htblColNameType, strTableName, clusteringKey);
