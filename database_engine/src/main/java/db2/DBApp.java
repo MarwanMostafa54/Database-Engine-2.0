@@ -68,7 +68,7 @@ public class DBApp {
 						BigDecimal number = new BigDecimal(temp);
 						Double encoder=number.doubleValue();
 						if(t.getColumns().get(strColName).search(key)!=null){
-							
+
 						}
 						else{
 						t.getColumns().get(strColName).insert(key, encoder);}
@@ -98,7 +98,7 @@ public class DBApp {
 	public void updateTable(String strTableName,
 			String strClusteringKeyValue,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
-
+			
 		throw new DBAppException("not implemented yet");
 	}
 
