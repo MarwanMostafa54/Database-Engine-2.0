@@ -12,8 +12,9 @@ public class Table implements Serializable {
     public String clusterKey;
     public Hashtable<String, bplustree> columns;
     public int pageCount;
-    
-    public Table(String strTableName, String clusteringKey, Hashtable<String, String> htblColNameType) throws DBAppException{
+
+    public Table(String strTableName, String clusteringKey, Hashtable<String, String> htblColNameType)
+            throws DBAppException {
         if (!Tool.checkKey(clusteringKey, htblColNameType)) {
             throw new DBAppException("Invalid Selected Clustering Column");
         } else {
@@ -27,7 +28,7 @@ public class Table implements Serializable {
                 }
                 this.columns = new Hashtable<>();
                 this.tableName = strTableName;
-                 this.clusterKey = clusteringKey;
+                this.clusterKey = clusteringKey;
                 this.pageCount = 0;
                 this.tablePath = "Tables/" + strTableName;
                 File dataDir = new File("Tables");
@@ -46,13 +47,12 @@ public class Table implements Serializable {
                 }
                 Tool.serializeTable(this);
                 Tool.WriteInFile(htblColNameType, strTableName, clusteringKey);
-                this.columns.put(clusteringKey,new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
-            }
-            else {
+                this.columns.put(clusteringKey, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
+            } else {
                 throw new DBAppException("Table Name already exists");
             }
+        }
     }
-}
 
     public String getTableName() {
         return tableName;
@@ -81,59 +81,54 @@ public class Table implements Serializable {
     public int getPageCount() {
         return pageCount;
     }
-    public void CreateNewPage(){
+
+    public void CreateNewPage() {
         Tool.deserializeTable(this.getTableName());
-        Page p = new Page(++pageCount); 
-        System.out.println("New Page Created");  
-        Tool.serializePage(this,p);
+        Page p = new Page(++pageCount);
+        System.out.println("New Page Created");
+        Tool.serializePage(this, p);
         Tool.serializeTable(this);
     }
 
     public void deletePage(int PageId) {
-        String fileName = "Tables/" + this.getTableName() + "/"+this.getTableName()+PageId + ".ser";
-        Page page=Tool.deserializePage(this, PageId);
+        String fileName = "Tables/" + this.getTableName() + "/" + this.getTableName() + PageId + ".ser";
+        Page page = Tool.deserializePage(this, PageId);
         File file = new File(fileName);
-        try{
-            file.delete(); 
+        try {
+            file.delete();
             page = null;
             pageCount--;
             System.out.println("Page Delete");
             Tool.serializeTable(this);
-            }
-            catch(Exception e){
-                e.printStackTrace();
-			    System.out.println("Failed to delete page.");
-            } 
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Failed to delete page.");
+        }
     }
 
-    public void insertTupleIntoLastPage(Tuple tuple){
+    public void insertTupleIntoLastPage(Tuple tuple) {
         Page p = Tool.deserializePage(this, this.pageCount);
-        if(p.isFull()){
+        if (p.isFull()) {
             this.CreateNewPage();
             Page p1 = Tool.deserializePage(this, this.pageCount);
             p1.AddTuple(tuple);
             Tool.serializePage(this, p1);
-        }
-        else{
+        } else {
             p.AddTuple(tuple);
             Tool.serializePage(this, p);
         }
         Tool.serializeTable(this);
     }
 
-    public void deleteTuple(int pageID, int tupleID){
+    public void deleteTuple(int pageID, int tupleID) {
         Page p = Tool.deserializePage(this, pageID);
         p.deleteTuple(tupleID);
-        if(p.isEmpty()){
+        if (p.isEmpty()) {
             this.deletePage(pageID);
-        }
-        else{
+        } else {
             Tool.serializePage(this, p);
         }
         Tool.serializeTable(this);
     }
-
-
-
 
 }

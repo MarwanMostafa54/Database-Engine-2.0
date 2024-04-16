@@ -218,6 +218,7 @@ public class Tool {
             ObjectInputStream objectAccess = new ObjectInputStream(fileAccess);
             table = (Table) objectAccess.readObject();
             objectAccess.close();
+            fileAccess.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Failed to deserialize table.");

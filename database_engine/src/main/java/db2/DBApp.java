@@ -74,7 +74,7 @@ public class DBApp {
 						t.getColumns().get(strColName).insert(key, encoder);}
 					}
 				}
-				
+				Tool.updateMetaData(strTableName, strColName,strIndexName);
 			}
 		}
 		else {
