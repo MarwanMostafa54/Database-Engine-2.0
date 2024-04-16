@@ -82,20 +82,23 @@ public class Table implements Serializable {
         return pageCount;
     }
 
-    public void CreateNewPage() {
+    public Page CreateNewPage() {
         Tool.deserializeTable(this.getTableName());
         Page p = new Page(++pageCount);
         System.out.println("New Page Created");
         Tool.serializePage(this, p);
         Tool.serializeTable(this);
+        return p;
     }
 
     public void deletePage(int PageId) {
         String fileName = "Tables/" + this.getTableName() + "/" + this.getTableName() + PageId + ".ser";
         Page page = Tool.deserializePage(this, PageId);
         File file = new File(fileName);
+        System.out.println(file.exists());
         try {
             file.delete();
+            System.out.println(fileName);
             page = null;
             pageCount--;
             System.out.println("Page Delete");
