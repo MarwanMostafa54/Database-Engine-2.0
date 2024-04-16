@@ -13,9 +13,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Vector;
 
 public class Tool {
@@ -68,30 +70,32 @@ public class Tool {
     public static void serializeTable(Table T) {
         try {
 
-            String path = "Tables/" + T.getTableName() + "/"+T.getTableName()+"_Properties" + ".ser";
+            String path = "Tables/" + T.getTableName() + "/" + T.getTableName() + "_Properties" + ".ser";
             path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
             File file = new File(path);
             FileOutputStream fileAccess;
             fileAccess = new FileOutputStream(file);
             ObjectOutputStream objectAccess = new ObjectOutputStream(fileAccess);
             objectAccess.writeObject(T);
+            objectAccess.close();
+            fileAccess.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Failed to serialize table.");
         }
     }
 
-   
-    
-    public static void serializePage(Table T,Page P) {
+    public static void serializePage(Table T, Page P) {
         try {
-            String path = "Tables/" + T.getTableName() + "/"+T.getTableName()+T.getPageCount() + ".ser";
+            String path = "Tables/" + T.getTableName() + "/" + T.getTableName() + T.getPageCount() + ".ser";
             path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
             File file = new File(path);
             FileOutputStream fileAccess;
             fileAccess = new FileOutputStream(file);
             ObjectOutputStream objectAccess = new ObjectOutputStream(fileAccess);
             objectAccess.writeObject(P);
+            objectAccess.close();
+            fileAccess.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Failed to serialize table.");
@@ -107,14 +111,13 @@ public class Tool {
             ObjectInputStream objectAccess = new ObjectInputStream(fileAccess);
             page = (Page) objectAccess.readObject();
             objectAccess.close();
+            fileAccess.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Failed to deserialize page.");
         }
         return page;
     }
-    
-
 
     public static void WriteInFile(Hashtable<String, String> htblColNameType, String strTableName,
             String strClusteringKeyColumn) {
@@ -127,7 +130,7 @@ public class Tool {
             }
         }
 
-        String filePath = "data/metadata.csv"; 
+        String filePath = "data/metadata.csv";
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
             for (Map.Entry<String, String> entry : htblColNameType.entrySet()) {
                 String key = entry.getKey();
@@ -189,12 +192,10 @@ public class Tool {
         return false;
     }
 
-
     public static boolean checkKey(String strClusteringKeyColumn, Hashtable<String, String> htblColNameType) {
         return htblColNameType.containsKey(strClusteringKeyColumn);
     }
 
-    
     public static boolean checkApplicable(String ClassType) {
         Vector<String> datatype = new Vector<String>();
         datatype.add("java.lang.Integer");
@@ -218,6 +219,7 @@ public class Tool {
             ObjectInputStream objectAccess = new ObjectInputStream(fileAccess);
             table = (Table) objectAccess.readObject();
             objectAccess.close();
+            fileAccess.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Failed to deserialize table.");
@@ -227,64 +229,61 @@ public class Tool {
 
     public static ArrayList<String[]> readMetaData(String strTableName) {
 
-		try {
-			String line = "";
-			ArrayList<String[]> metaData= new ArrayList<String[]>();
+        try {
+            String line = "";
+            ArrayList<String[]> metaData = new ArrayList<String[]>();
 
-			BufferedReader file = new BufferedReader(new FileReader("data//metadata.csv"));
-			while ((line = file.readLine()) != null) {
-				String[] data = line.split(",");
-				if(data[0].equals(strTableName))
-				{
-					metaData.add(data);
-				}
-			}
-			file.close();
-			return metaData;
-		}
-		catch(Exception E) {
-			System.out.println("Table non existent");
-			return null;
-		}
-	}
-	public static Hashtable<String, String> gethtblColNameType(ArrayList<String[]> metaDataTable)
-	{
-		Hashtable<String,String> columnNameAndType=new Hashtable<String,String>();
-		for(String[] column: metaDataTable)
-		{
-			String columnName=column[1];
-			String columnType=column[2];
-			columnNameAndType.put(columnName, columnType);
-		}
-		return columnNameAndType;
-	}
-	public static String[] determineClusteringKey(ArrayList<String[]> metaDataTable)
-	{
-		String[] indexAndValue= new String[2];
-		for (int i = 0; i < metaDataTable.size(); i++) {
-			String[] array= metaDataTable.get(i);
-			if(array[3].equals("True"))
-			{
-				indexAndValue[0]=array[1];
-				indexAndValue[1]=i+"";
-			}
-		}
-		return indexAndValue;
-	}
+            BufferedReader file = new BufferedReader(new FileReader("data//metadata.csv"));
+            while ((line = file.readLine()) != null) {
+                String[] data = line.split(",");
+                if (data[0].equals(strTableName)) {
+                    metaData.add(data);
+                }
+            }
+            file.close();
+            return metaData;
+        } catch (Exception E) {
+            System.out.println("Table non existent");
+            return null;
+        }
+    }
+
+    public static Hashtable<String, String> gethtblColNameType(ArrayList<String[]> metaDataTable) {
+        Hashtable<String, String> columnNameAndType = new Hashtable<String, String>();
+        for (String[] column : metaDataTable) {
+            String columnName = column[1];
+            String columnType = column[2];
+            columnNameAndType.put(columnName, columnType);
+        }
+        return columnNameAndType;
+    }
+
+    public static String[] determineClusteringKey(ArrayList<String[]> metaDataTable) {
+        String[] indexAndValue = new String[2];
+        for (int i = 0; i < metaDataTable.size(); i++) {
+            String[] array = metaDataTable.get(i);
+            if (array[3].equals("True")) {
+                indexAndValue[0] = array[1];
+                indexAndValue[1] = i + "";
+            }
+        }
+        return indexAndValue;
+    }
 
     public static int readBtreeOrder(String path) {
-        try{
-			FileReader reader =new FileReader(path);
-			Properties p = new Properties();
-			p.load(reader);
-			String theNum = p.getProperty("NodeSize");
-			return Integer.parseInt(theNum);}
+        try {
+            FileReader reader = new FileReader(path);
+            Properties p = new Properties();
+            p.load(reader);
+            String theNum = p.getProperty("NodeSize");
+            return Integer.parseInt(theNum);
+        }
 
-		catch(IOException E){
-			E.printStackTrace();
-			System.out.println("Error reading properties");
-		}
-		return 0;
+        catch (IOException E) {
+            E.printStackTrace();
+            System.out.println("Error reading properties");
+        }
+        return 0;
     }
 
     public static boolean checker(ArrayList<String[]> metaData, String strColName) {
@@ -296,25 +295,24 @@ public class Tool {
         return false; // Column name does not exist in metadata
     }
 
-    public static void updateMetaData(String strTableName, String indxCol,String strIndexName){
-        ArrayList<String[]> metaData= new ArrayList<String[]>();
+    public static void updateMetaData(String strTableName, String indxCol, String strIndexName) {
+        ArrayList<String[]> metaData = new ArrayList<String[]>();
         try {
             String line = "";
 
             BufferedReader read = new BufferedReader(new FileReader("data//metadata.csv"));
             while ((line = read.readLine()) != null) {
                 String[] data = line.split(",");
-                if(data[0].equals(strTableName) && data[1].equals(indxCol))
-                {
-                    data[4]=strIndexName;
-                    data[5]="Btree";
+                if (data[0].equals(strTableName) && data[1].equals(indxCol)) {
+                    data[4] = strIndexName;
+                    data[5] = "Btree";
                 }
                 metaData.add(data);
             }
             read.close();
         }
 
-        catch(Exception E) {
+        catch (Exception E) {
             System.out.println("Failed to read from metadata.csv!");
         }
         try {
@@ -333,15 +331,14 @@ public class Tool {
             write.append("\n");
             write.flush();
             write.close();
-        }
-        catch(IOException E) {
+        } catch (IOException E) {
             E.printStackTrace();
             System.out.println("problem with writing table info");
         }
         try {
             PrintWriter write = new PrintWriter(new FileWriter("data//metadata.csv", true));
             for (int i = 1; i < metaData.size(); i++) {
-                String[] temp= metaData.get(i);
+                String[] temp = metaData.get(i);
                 write.append(temp[0]);
                 write.append(",");
 
@@ -364,11 +361,49 @@ public class Tool {
             write.close();
         }
 
-        catch(Exception E) {
+        catch (Exception E) {
             System.out.println("Failed to update metadata.csv!");
             E.printStackTrace();
         }
     }
 
-}
+    public static Set<String> getColumNameFromMetaData(String tableName) throws IOException {
+        Set<String> ColumName = new HashSet<>();
+        try (BufferedReader br = new BufferedReader(new FileReader("metadata.csv"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 2 && parts[0].equals(tableName)) {
+                    ColumName.add(parts[1]);
+                }
+            }
+        }
+        return ColumName;
+    }
 
+    public static ArrayList<Tuple> filterTuplesByOperator(Table table, String columnName, String operator,
+            Object value) {
+        ArrayList<Tuple> resultTuples = new ArrayList<>();
+
+        for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
+            Page page = Tool.deserializePage(table, pageId);
+
+            for (Tuple tuple : page.getTuples()) {
+                String columnValue = tuple.getValue(columnName);
+
+                boolean conditionSatisfied = checkCondition(columnValue, operator, value);
+
+                if (conditionSatisfied) {
+                    resultTuples.add(tuple);
+                }
+            }
+            serializePage(table, page);
+        }
+
+        return resultTuples;
+    }
+
+    private static boolean checkCondition(String columnValue, String operator, Object value) {
+        return false;
+    }
+}

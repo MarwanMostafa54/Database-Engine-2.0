@@ -6,25 +6,25 @@ import java.util.Vector;
 
 public class Page implements Serializable {
     private Vector<Tuple> tuples;
-    private int tupleId;
+    private int tupleCount;
     private int N;
-	//private int PageId;
+	private int PageId;
     public Page(int PageId){
-        tupleId=1;
+        tupleCount=1;
         tuples = new Vector<Tuple>();
-        //this.PageId=PageId;
+        this.PageId=PageId;
         N = Tool.readPageSize("config//DBApp.properties");
     }
     
     public int getN() {
         return N;
     }
-    // public int getPageID() {
-    //     return PageId;
-    // }
+    public int getPageID() {
+        return PageId;
+     }
     
-    public int getTupleID() {
-        return tupleId;
+    public int gettupleCount() {
+        return tupleCount;
     }
 
     public Vector<Tuple> getTuples()
@@ -43,8 +43,8 @@ public class Page implements Serializable {
     public int AddTuple(Tuple tuple)
 	{
 		tuples.add(tuple);
-		tupleId++;
-		return tupleId;
+		tupleCount++;
+		return tupleCount;
 	}
 
     public Tuple getTuple(int index) throws IOException
@@ -55,7 +55,7 @@ public class Page implements Serializable {
 	public void deleteTuple(int index)
 	{
 		tuples.remove(index);
-		tupleId--;
+		tupleCount--;
 	}
 
 	
