@@ -32,6 +32,10 @@ public class Page implements Serializable {
 		return this.tuples;
 	}
 
+    public boolean isEmpty() {
+		return tuples.size() <= 0;
+    }
+
 	public boolean isFull() {
 		return tuples.size() >N;
     }
@@ -48,14 +52,10 @@ public class Page implements Serializable {
 		return tuples.get(index);
 	}
 
-	public void deleteTuple(int index,Table t) throws IOException
+	public void deleteTuple(int index)
 	{
-		 tuples.remove(index);
-		 tupleId--;
-         if(tupleId<1){
-            t.deletePage(this);
-         }
-			
+		tuples.remove(index);
+		tupleId--;
 	}
 
 	

@@ -81,13 +81,12 @@ public class Table implements Serializable {
     public int getPageCount() {
         return pageCount;
     }
-    public Page CreateNewPage(){
+    public void CreateNewPage(){
         Tool.deserializeTable(this.getTableName());
         Page p = new Page(++pageCount); 
         System.out.println("New Page Created");  
         Tool.serializePage(this,p);
         Tool.serializeTable(this);
-        return p;
     }
 
     public void deletePage(int PageId) {
@@ -107,12 +106,31 @@ public class Table implements Serializable {
             } 
     }
 
-    public void insertTupleIntoLastPage(){
-
+    public void insertTupleIntoLastPage(Tuple tuple){
+        Page p = Tool.deserializePage(this, this.pageCount);
+        if(p.isFull()){
+            this.CreateNewPage();
+            Page p1 = Tool.deserializePage(this, this.pageCount);
+            p1.AddTuple(tuple);
+            Tool.serializePage(this, p1);
+        }
+        else{
+            p.AddTuple(tuple);
+            Tool.serializePage(this, p);
+        }
+        Tool.serializeTable(this);
     }
 
-    public void deleteTuple(){
-        
+    public void deleteTuple(int pageID, int tupleID){
+        Page p = Tool.deserializePage(this, pageID);
+        p.deleteTuple(tupleID);
+        if(p.isEmpty()){
+            this.deletePage(p);
+        }
+        else{
+            Tool.serializePage(this, p);
+        }
+        Tool.serializeTable(this);
     }
 
 
