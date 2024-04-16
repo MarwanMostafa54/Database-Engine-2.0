@@ -2,11 +2,13 @@ package db2;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Properties;
 
 public class Tool {
     public static void initializeMetaData() {
@@ -30,6 +32,32 @@ public class Tool {
             }
         }
     }
+    
+    
+    public static void initializeProperties() {
+        File configFile = new File("config/DBApp.properties");
+        if (configFile.exists()) {
+            return; // Properties file already exists
+        }
+
+        Properties properties = new Properties();
+        properties.setProperty("MaximumRowsCountinPage", "5");
+        properties.setProperty("NodeSize", "5");
+        properties.setProperty("PageId", "1");
+        properties.setProperty("nextBPTID", "1");
+
+        try {
+            // Create parent directories if they don't exist
+            configFile.getParentFile().mkdirs();
+
+            // Write properties to file
+            properties.store(new FileWriter(configFile), "Database engine properties");
+            System.out.println("Properties file created successfully.");
+        } catch (IOException e) {
+            System.out.println("Failed to write properties file: " + e.getMessage());
+        }
+    }
+    
     public static void WriteInFile(Hashtable<String, String> htblColNameType, String strTableName,
     String strClusteringKeyColumn) {
     String filePath = "./metadata.csv"; 
@@ -48,4 +76,20 @@ public class Tool {
     }
     }
 
+    public static int readPageSize(String path) {
+		try{
+			FileReader reader =new FileReader(path);
+			Properties p = new Properties();
+			p.load(reader);
+			String theNum = p.getProperty("MaximumRowsCountinPage");
+			return Integer.parseInt(theNum);}
+
+		catch(IOException E){
+			E.printStackTrace();
+			System.out.println("Error reading properties");
+		}
+		return 0;
+	}
+
+    
 }

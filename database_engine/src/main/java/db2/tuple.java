@@ -1,14 +1,14 @@
 package db2;
 import java.io.Serializable;
 import java.util.Hashtable;
-public class tuple implements Serializable {
+public class Tuple implements Serializable {
     private Hashtable<String,String> record;
     private String hashValue;
-    public tuple(){
+    public Tuple(){
         this.record = new Hashtable<>();
     }
 
-public tuple(Hashtable<String, Object> record,String hashValue){
+public Tuple(Hashtable<String, Object> record,String hashValue){
     this.record = new Hashtable<>();
     for (String key : record.keySet())
         this.record.put(key, record.get(key).toString());
