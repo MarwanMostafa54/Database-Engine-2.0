@@ -110,6 +110,7 @@ public class Table implements Serializable {
     }
 
     public void insertTupleIntoLastPage(Tuple tuple) {
+        if(this.pageCount>0){
         Page p = Tool.deserializePage(this, this.pageCount);
         if (p.isFull()) {
             this.CreateNewPage();
@@ -119,6 +120,12 @@ public class Table implements Serializable {
         } else {
             p.AddTuple(tuple);
             Tool.serializePage(this, p);
+        }}
+        else{
+            this.CreateNewPage();
+            Page p1 = Tool.deserializePage(this, this.pageCount);
+            p1.AddTuple(tuple);
+            Tool.serializePage(this, p1);
         }
         Tool.serializeTable(this);
     }

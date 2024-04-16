@@ -369,7 +369,7 @@ public class Tool {
 
     public static Set<String> getColumNameFromMetaData(String tableName) throws IOException {
         Set<String> ColumName = new HashSet<>();
-        try (BufferedReader br = new BufferedReader(new FileReader("metadata.csv"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("data//metadata.csv"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");

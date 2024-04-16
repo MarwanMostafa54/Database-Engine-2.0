@@ -79,7 +79,7 @@ public class DBApp {
 						}
 					}
 				}
-				Tool.updateMetaData(strTableName, strColName,strIndexName);
+				Tool.updateMetaData(strTableName, strColName, strIndexName);
 			}
 		} else {
 			throw new DBAppException("Table is not Found in Meta Data");
@@ -88,11 +88,11 @@ public class DBApp {
 
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
-	public void insertIntoTable(String strTableName,
+	public static void insertIntoTable(String strTableName,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		try {
 			Table table = Tool.deserializeTable(strTableName);
-
+			//Clusterkey exists and check for clustering duplicates
 			Set<String> tableColumnNames = Tool.getColumNameFromMetaData(strTableName);
 			for (String columnName : htblColNameValue.keySet()) {
 				if (!tableColumnNames.contains(columnName) && tableColumnNames.size() != htblColNameValue.size()) {

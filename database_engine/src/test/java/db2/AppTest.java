@@ -21,25 +21,25 @@ public class AppTest {
     }
 
     public static void main(String[] args) throws DBAppException {
-        System.err.println(Tool.readPageSize("config//DBApp.properties"));
-        String strTableName = "Student1";
-        Hashtable htblColNameType = new Hashtable( );
-        htblColNameType.put("id", "java.lang.Integer");
-        htblColNameType.put("name", "java.lang.String");
-        htblColNameType.put("gpa", "java.lang.double");
-        File dataDir = new File("Tables");
-        Table t1=new Table(strTableName, "id", htblColNameType);
-        t1.CreateNewPage();
-        strTableName = "Student2";
-        htblColNameType = new Hashtable( );
-        htblColNameType.put("id", "java.lang.Integer");
-        htblColNameType.put("name", "java.lang.String");
-        htblColNameType.put("gpa", "java.lang.double");
-        dataDir = new File("Tables");
-         Table t2=new Table(strTableName, "id", htblColNameType);
-        t2.CreateNewPage();
-         Page p = t2.CreateNewPage();
-           t2.deletePage(2);
+        // System.err.println(Tool.readPageSize("config//DBApp.properties"));
+        //String strTableName = "Student1";
+        // Hashtable htblColNameType = new Hashtable( );
+        // htblColNameType.put("id", "java.lang.Integer");
+        // htblColNameType.put("name", "java.lang.String");
+        // htblColNameType.put("gpa", "java.lang.double");
+        // File dataDir = new File("Tables");
+        // Table t1=new Table(strTableName, "id", htblColNameType);
+        // t1.CreateNewPage();
+         //strTableName = "Student2";
+        // htblColNameType = new Hashtable( );
+        // htblColNameType.put("id", "java.lang.Integer");
+        // htblColNameType.put("name", "java.lang.String");
+        // htblColNameType.put("gpa", "java.lang.double");
+        // dataDir = new File("Tables");
+        //  Table t2=new Table(strTableName, "id", htblColNameType);
+        // t2.CreateNewPage();
+        //  Page p = t2.CreateNewPage();
+        //    t2.deletePage(2);
         // Tool.updateMetaData("strTableName", "gpa","gpaIndex" );
 
         // Hashtable<String, Object> sampleData1 = new Hashtable<>();
@@ -59,7 +59,44 @@ public class AppTest {
         // // Test toString method
         // System.out.println("Tuple 1: " + tuple1.toString());
         // System.out.println("Tuple 2: " + tuple2.toString());
-     
+        
+        // Hashtable htblColNameValue = new Hashtable( );
+		// htblColNameValue.put("id", new Integer( 2343432 ));
+		// htblColNameValue.put("name", new String("Ahmed Noor" ) );
+		// htblColNameValue.put("gpa", new Double( 0.95 ) );
+		// DBApp.insertIntoTable( strTableName , htblColNameValue );
+
+		// htblColNameValue.clear( );
+		// htblColNameValue.put("id", new Integer( 453455 ));
+		// htblColNameValue.put("name", new String("Ahmed Noor" ) );
+		// htblColNameValue.put("gpa", new Double( 0.95 ) );
+		// DBApp.insertIntoTable( strTableName , htblColNameValue );
+
+		// htblColNameValue.clear( );
+		// htblColNameValue.put("id", new Integer( 5674567 ));
+		// htblColNameValue.put("name", new String("Dalia Noor" ) );
+		// htblColNameValue.put("gpa", new Double( 1.25 ) );
+		// DBApp.insertIntoTable( strTableName , htblColNameValue );
+
+		// htblColNameValue.clear( );
+		// htblColNameValue.put("id", new Integer( 23498 ));
+		// htblColNameValue.put("name", new String("John Noor" ) );
+		// htblColNameValue.put("gpa", new Double( 1.5 ) );
+		// DBApp.insertIntoTable( strTableName , htblColNameValue );
+
+		// htblColNameValue.clear( );
+		// htblColNameValue.put("id", new Integer( 78452 ));
+		// htblColNameValue.put("name", new String("Zaky Noor" ) );
+		// htblColNameValue.put("gpa", new Double( 0.88 ) );
+		// DBApp.insertIntoTable( strTableName , htblColNameValue );
+        Table t3=Tool.deserializeTable("Student2");
+        Page p=Tool.deserializePage(t3, 1);
+        System.out.println(p.toString());
+        //deserializePageProblem
+        //hashtable duplicates
+        //is unique insert into table clustering key
+        //encoder math function
+        //matching value with java.lang.datatype
     }
 
 
