@@ -20,7 +20,7 @@ public class AppTest
     {
         assertTrue( true );
     }
-    public static void main( String[] args ){
+    public static void main( String[] args ) throws DBAppException{
         System.err.println(Tool.readPageSize("config//DBApp.properties"));
         String strTableName = "Student";
         Hashtable htblColNameType = new Hashtable( );
@@ -30,4 +30,5 @@ public class AppTest
         File dataDir = new File("Tables");
 		Table t=new Table(strTableName, "id", htblColNameType, "Tables");
     }
+    
 }

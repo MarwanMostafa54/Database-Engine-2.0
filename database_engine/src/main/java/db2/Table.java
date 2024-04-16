@@ -3,6 +3,7 @@ package db2;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Hashtable;
+import java.util.Set;
 
 public class Table implements Serializable {
     public String tableName;
@@ -12,19 +13,35 @@ public class Table implements Serializable {
     public Hashtable<String, bplustree> columns;
     public int pageCount;
     
-    public Table(String strTableName, String clusteringKey, Hashtable<String, String> htblColNameType, String MetaPath){
-        this.columns = new Hashtable<>();
-        this.tableName = strTableName;
-        this.clusterKey = clusteringKey;
-        this.pageCount = 0;
-        this.tablePath = "./Tables/" + strTableName;
-        File f = new File(this.tablePath);
-        if(f.exists()){
-            f.mkdir();
-        }
-        Tool.serializeTable(this);
-        Tool.WriteInFile(htblColNameType, strTableName, clusteringKey);
+    public Table(String strTableName, String clusteringKey, Hashtable<String, String> htblColNameType, String MetaPath) throws DBAppException{
+        if (!Tool.checkKey(clusteringKey, htblColNameType)) {
+            throw new DBAppException("Invalid Selected Clustering Column");
+        } else {
+            if (Tool.isTableUnique(strTableName)) {
+                Set<String> colName = htblColNameType.keySet();
+
+                for (String n : colName) {
+                    if (Tool.checkApplicable(htblColNameType.get(n)) == false) {
+                        throw new DBAppException("Invalid column type.");
+                    }
+                }
+                this.columns = new Hashtable<>();
+                this.tableName = strTableName;
+                 this.clusterKey = clusteringKey;
+                this.pageCount = 0;
+                this.tablePath = "./Tables/" + strTableName;
+                File f = new File(this.tablePath);
+                if(f.exists()){
+                    f.mkdir();
+                }
+                Tool.serializeTable(this);
+                Tool.WriteInFile(htblColNameType, strTableName, clusteringKey);
+            }
+            else {
+                throw new DBAppException("Table Name already exists");
+            }
     }
+}
 
     public String getTableName() {
         return tableName;
@@ -49,6 +66,7 @@ public class Table implements Serializable {
     public int getPageCount() {
         return pageCount;
     }
+
 
 
 }
