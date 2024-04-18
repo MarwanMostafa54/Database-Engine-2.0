@@ -60,11 +60,11 @@ public class DBApp {
 
 			else {
 				Table t = Tool.deserializeTable(strTableName);
-				if (t.columns.containsKey(strColName)) {
+				if (t.Indices.containsKey(strColName)) {
 					throw new DBAppException("Column " + strColName + " index already created.");
 				}
 
-				t.addColumn(strColName, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
+				t.addIndex(strColName, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
 				for (int i = 0; i < t.getPageCount(); i++) {
 					Page p = Tool.deserializePage(t, i);
 					int j = 0;
@@ -77,7 +77,7 @@ public class DBApp {
 						// So when Updating/Deleting I should check first if there is duplicate and
 						// delete/update duplicate instead of original
 						// value in my B+Tree
-						if (t.getColumns().get(strColName).search(key) != null) {
+						if (t.getIndices().get(strColName).search(key) != null) {
 							// Check Duplicate Again
 							if (!t.duplicates.containsKey(strColName)) {
 								// If not, create a new inner hashtable for the key
@@ -93,7 +93,7 @@ public class DBApp {
 							Vector<Double> vector = innerHashtable.get(key);
 							vector.add(encoder);
 						} else {
-							t.getColumns().get(strColName).insert(key, encoder);
+							t.getIndices().get(strColName).insert(key, encoder);
 						}
 					}
 				}
@@ -106,6 +106,7 @@ public class DBApp {
 
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
+	//Insert Should be Done,Testing Left
 	public static void insertIntoTable(String strTableName,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		try {
@@ -122,11 +123,38 @@ public class DBApp {
 			if (!htblColNameValue.containsKey(table.getClusterKey())) {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
 			}
-
+			//Update each Btree that exists
+			//With Duplicate Case
+			for(String strColumnName : htblColNameValue.keySet()){
+				if(table.getIndices().containsKey(strColumnName)){
+					int key=htblColNameValue.get(strColumnName).hashCode();
+					Page page=Tool.deserializePage(table,table.getPageCount());
+					double encoder=Tool.encoder(table.getPageCount(),(page.gettupleCount()+1));//gettupleCount()returns last inserted tuple tupleid is the next one
+					if (table.getIndices().get(strColumnName).search(key) != null) {
+						// Check Duplicate Again
+						if (!table.duplicates.containsKey(strColumnName)) {
+							// If not, create a new inner hashtable for the key
+							table.duplicates.put(strColumnName, new Hashtable<Integer, Vector<Double>>());
+						}
+						Hashtable<Integer, Vector<Double>> innerHashtable = table.duplicates.get(strColumnName);
+						// Check if the inner hashtable already contains the key
+						if (!innerHashtable.containsKey(key)) {
+							// If not, create a new vector for the key
+							innerHashtable.put(key, new Vector<Double>());
+						}
+						// Get the vector associated with the key
+						Vector<Double> vector = innerHashtable.get(key);
+						vector.add(encoder);
+					} else {
+						table.getIndices().get(strColumnName).insert(key, encoder);
+					}
+				}
+			}
+			//Create my new Tuple
 			Tuple tuple = new Tuple(htblColNameValue, table.getClusterKey());
-
+			//Insert int table's pages
 			table.insertTupleIntoLastPage(tuple);
-
+			//Save Table
 			Tool.serializeTable(table);
 		} catch (Exception e) {
 			throw new DBAppException("Error inserting into table: " + e.getMessage());
@@ -137,13 +165,13 @@ public class DBApp {
 	// htblColNameValue holds the key and new value
 	// htblColNameValue will not include clustering key as column name
 	// strClusteringKeyValue is the value to look for to find the row to update.
-	public void updateTable(String strTableName, // suspicious
+	public void updateTable(String strTableName, // suspicious //Update is Wrong needs Rework
 			String strClusteringKeyValue,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		try {
 			Table table = Tool.deserializeTable(strTableName);
 			int key = strClusteringKeyValue.hashCode();
-			Double temp = table.getColumns().get(table.clusterKey).search(key);
+			Double temp = table.getIndices().get(table.clusterKey).search(key);
 			if (temp != null) {
 				String encoder = temp + "";
 				String[] data = encoder.split(".");
