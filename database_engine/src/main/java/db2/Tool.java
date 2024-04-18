@@ -460,4 +460,30 @@ public class Tool {
         }
     
     }
+
+    //STILL DONT KNOW ITS USE
+    public static void insertIntoBtree(){
+
+    }
+
+    //Checks if duplicate has already a hashtable inside hashtable if not then i create a new hashtable for my key
+    public static boolean duplicatesExists(String strColName,int Key,Hashtable<String,Hashtable<Integer,Vector<Double>>> duplicates){
+        if(duplicates.containsKey(strColName)){
+            if(duplicates.get(strColName).containsKey(Key)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //MY MATH FUNCTION TO CREATE A ENCODER VALUE
+    public static double encoder(int pageID,int tupleID){
+        return 0;
+    }
+
+    //TO EXTRACT PAGE ID,TUPLE ID IN A ARRAYLIST FROM ENCODED VALUE
+    public static ArrayList<Integer> decoder(Double value){
+        return null;
+    }
+
 }

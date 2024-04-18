@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.Set;
+import java.util.Vector;
 
 public class Table implements Serializable {
     public String tableName;
@@ -12,6 +13,7 @@ public class Table implements Serializable {
     public String clusterKey;
     public Hashtable<String, bplustree> columns;
     public int pageCount;
+    public Hashtable<String,Hashtable<Integer,Vector<Double>>> duplicates;
 
     public Table(String strTableName, String clusteringKey, Hashtable<String, String> htblColNameType)
             throws DBAppException {

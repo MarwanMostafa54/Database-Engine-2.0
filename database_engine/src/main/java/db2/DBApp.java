@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -47,6 +48,7 @@ public class DBApp {
 	}
 
 	// following method creates a B+tree index
+	//CreateIndex Should be done ,just need Testing
 	public void createIndex(String strTableName,
 			String strColName,
 			String strIndexName) throws DBAppException, IOException {
@@ -69,12 +71,27 @@ public class DBApp {
 					for (Tuple tuple : p.getTuples()) {
 						int key = tuple.getValue(strColName).hashCode();
 						j++;
-						String temp = i + "." + j;
-						BigDecimal number = new BigDecimal(temp);
-						Double encoder = number.doubleValue();
+						Double encoder = Tool.encoder(i, j);
+						//Important I dont add the original unique value to duplicate onloy keep record of its duplicates
+						//So when Updating/Deleting I should check first if there is duplicate and delete/update duplicate instead of original
+						//value in my B+Tree
 						if (t.getColumns().get(strColName).search(key) != null) {
-
-						} else {
+								//Check Duplicate Again
+								if (!t.duplicates.containsKey(strColName)) {
+									// If not, create a new inner hashtable for the key
+									t.duplicates.put(strColName, new Hashtable<Integer, Vector<Double>>());
+								}
+								Hashtable<Integer, Vector<Double>> innerHashtable = t.duplicates.get(strColName);
+								// Check if the inner hashtable already contains the key
+								if (!innerHashtable.containsKey(key)) {
+   									 // If not, create a new vector for the key
+    								innerHashtable.put(key, new Vector<Double>());
+								}
+                            	// Get the vector associated with the key
+								Vector<Double> vector = innerHashtable.get(key);
+								vector.add(encoder);											
+						}
+					    else {
 							t.getColumns().get(strColName).insert(key, encoder);
 						}
 					}
