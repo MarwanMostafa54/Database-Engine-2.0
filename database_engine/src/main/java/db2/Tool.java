@@ -369,7 +369,7 @@ public class Tool {
 
     public static Set<String> getColumNameFromMetaData(String tableName) throws IOException {
         Set<String> ColumName = new HashSet<>();
-        try (BufferedReader br = new BufferedReader(new FileReader("metadata.csv"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("data//metadata.csv"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
@@ -403,27 +403,87 @@ public class Tool {
         return resultTuples;
     }
 
-    private static boolean checkCondition(String columnValue, String operator, Object value) {
+    public static boolean checkCondition(String columnValue, String operator, Object value) throws IllegalArgumentException {
+        // if( columnValue != value)
+        //     throw new IllegalArgumentException("Invalid argument" + value); 
+        switch (operator) {
+            case "=":
+            if (value instanceof String) {
+                return columnValue.equals(value.toString());                
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue == numericValue;
+            }
+            case "!=":
+            if (value instanceof String) {
+                return !columnValue.equals(value.toString());                
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue != numericValue;
+            }
+            case ">":
+            if (value instanceof String) {
+                return columnValue.compareTo(value.toString()) > 0;               
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue > numericValue;
+            }
+            case ">=":
+            if (value instanceof String) {
+                return columnValue.compareTo(value.toString()) >= 0;               
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue >= numericValue;
+            }
+            case "<":
+            if (value instanceof String) {
+                return columnValue.compareTo(value.toString()) < 0;               
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue < numericValue;
+            }
+            case "<=":
+            if (value instanceof String) {
+                return columnValue.compareTo(value.toString()) <= 0;               
+            } else {
+                double columnNumericValue = Double.parseDouble(columnValue);
+                double numericValue = Double.parseDouble(value.toString());
+                return columnNumericValue <= numericValue;
+            }
+            default:
+                throw new IllegalArgumentException("Invalid operator: " + operator);
+        }
+    
+    }
+
+    //STILL DONT KNOW ITS USE
+    public static void insertIntoBtree(){
+
+    }
+
+    //Checks if duplicate has already a hashtable inside hashtable if not then i create a new hashtable for my key
+    public static boolean duplicatesExists(String strColName,int Key,Hashtable<String,Hashtable<Integer,Vector<Double>>> duplicates){
+        if(duplicates.containsKey(strColName)){
+            if(duplicates.get(strColName).containsKey(Key)){
+                return true;
+            }
+        }
         return false;
     }
 
     //MY MATH FUNCTION TO CREATE A ENCODER VALUE
     public static double encoder(int pageID,int tupleID){
-        double calculate=tupleID/(double)(Tool.readPageSize("config//DBApp.properties")+1);
-        calculate+=pageID;
-        return calculate;
+        return 0;
     }
 
     //TO EXTRACT PAGE ID,TUPLE ID IN A ARRAYLIST FROM ENCODED VALUE
     public static ArrayList<Integer> decoder(Double value){
-        ArrayList<Integer> decode=new ArrayList<Integer>();
-        int temp = (int) Math.floor(value); // Round down the double value to the nearest integer
-        decode.add(temp);
-        double decimalPart = value - Math.floor(value);
-        int Temptuple=(int) (decimalPart*(Tool.readPageSize("config//DBApp.properties")+1));
-        decode.add(Temptuple);
-        return decode;
-
+        return null;
     }
 
 }
