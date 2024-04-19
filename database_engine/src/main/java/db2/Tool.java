@@ -403,61 +403,140 @@ public class Tool {
         return resultTuples;
     }
 
-    public static boolean checkCondition(String columnValue, String operator, Object value) throws IllegalArgumentException {
+    public static boolean checkCondition(String columnValue, String operator, Object value)
+            throws IllegalArgumentException {
         // if( columnValue != value)
-        //     throw new IllegalArgumentException("Invalid argument" + value); 
+        // throw new IllegalArgumentException("Invalid argument" + value);
         switch (operator) {
             case "=":
-            if (value instanceof String) {
-                return columnValue.equals(value.toString());                
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue == numericValue;
-            }
+                if (value instanceof String) {
+                    return columnValue.equals(value.toString());
+                } else {
+                    double columnNumericValue = Double.parseDouble(columnValue);
+                    double numericValue = Double.parseDouble(value.toString());
+                    return columnNumericValue == numericValue;
+                }
             case "!=":
-            if (value instanceof String) {
-                return !columnValue.equals(value.toString());                
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue != numericValue;
-            }
+                if (value instanceof String) {
+                    return !columnValue.equals(value.toString());
+                } else {
+                    double columnNumericValue = Double.parseDouble(columnValue);
+                    double numericValue = Double.parseDouble(value.toString());
+                    return columnNumericValue != numericValue;
+                }
             case ">":
-            if (value instanceof String) {
-                return columnValue.compareTo(value.toString()) > 0;               
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue > numericValue;
-            }
+                if (value instanceof String) {
+                    return columnValue.compareTo(value.toString()) > 0;
+                } else {
+                    double columnNumericValue = Double.parseDouble(columnValue);
+                    double numericValue = Double.parseDouble(value.toString());
+                    return columnNumericValue > numericValue;
+                }
             case ">=":
-            if (value instanceof String) {
-                return columnValue.compareTo(value.toString()) >= 0;               
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue >= numericValue;
-            }
+                if (value instanceof String) {
+                    return columnValue.compareTo(value.toString()) >= 0;
+                } else {
+                    double columnNumericValue = Double.parseDouble(columnValue);
+                    double numericValue = Double.parseDouble(value.toString());
+                    return columnNumericValue >= numericValue;
+                }
             case "<":
-            if (value instanceof String) {
-                return columnValue.compareTo(value.toString()) < 0;               
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue < numericValue;
-            }
+                if (value instanceof String) {
+                    return columnValue.compareTo(value.toString()) < 0;
+                } else {
+                    double columnNumericValue = Double.parseDouble(columnValue);
+                    double numericValue = Double.parseDouble(value.toString());
+                    return columnNumericValue < numericValue;
+                }
             case "<=":
-            if (value instanceof String) {
-                return columnValue.compareTo(value.toString()) <= 0;               
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue <= numericValue;
-            }
+                if (value instanceof String) {
+                    return columnValue.compareTo(value.toString()) <= 0;
+                } else {
+                    double columnNumericValue = Double.parseDouble(columnValue);
+                    double numericValue = Double.parseDouble(value.toString());
+                    return columnNumericValue <= numericValue;
+                }
             default:
                 throw new IllegalArgumentException("Invalid operator: " + operator);
         }
-    
+
     }
+
+    // STILL DONT KNOW ITS USE
+    public static void insertIntoBtree() {
+
+    }
+
+    // Checks if duplicate has already a hashtable inside hashtable if not then i
+    // create a new hashtable for my key
+    public static boolean duplicatesExists(String strColName, int Key,
+            Hashtable<String, Hashtable<Integer, Vector<Double>>> duplicates) {
+        if (duplicates.containsKey(strColName)) {
+            if (duplicates.get(strColName).containsKey(Key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // MY MATH FUNCTION TO CREATE A ENCODER VALUE
+    public static double encoder(int pageID, int tupleID) {
+        double calculate = tupleID / (double) (Tool.readPageSize("config//DBApp.properties") + 1);
+        calculate += pageID;
+        return calculate;
+    }
+
+    // TO EXTRACT PAGE ID,TUPLE ID IN A ARRAYLIST FROM ENCODED VALUE
+    public static ArrayList<Integer> decoder(Double value) {
+        ArrayList<Integer> decode = new ArrayList<Integer>();
+        int temp = (int) Math.floor(value); // Round down the double value to the nearest integer
+        decode.add(temp);
+        double decimalPart = value - Math.floor(value);
+        int Temptuple = (int) (decimalPart * (Tool.readPageSize("config//DBApp.properties") + 1));
+        decode.add(Temptuple);
+        return decode;
+
+    }
+
+    public static void shiftPages(int pageID, Table t) {
+        Table table = Tool.deserializeTable(t.getTableName());
+
+        for (int i = pageID; i <= table.getPageCount(); i++) {
+            Page page = Tool.deserializePage(table, i);
+            int newPageID = i - 1;
+            page.setPageID(newPageID);
+            Tool.serializePage(table, page);
+        }
+        Tool.serializeTable(table);
+    }
+public static boolean CheckType(Hashtable<String, Object> htblColNameValue, Table table){
+    ArrayList<String[]> metaData=Tool.readMetaData(table.getTableName());
+    for(String[] item:metaData){
+        Object temp=htblColNameValue.get(item[1]);
+        if (temp == null) {
+            return false;
+        }
+        switch(item[2].toLowerCase()){
+             case "java.lang.string":
+                    if(!(temp instanceof String)){
+                        return false;
+                    }
+             break;
+
+             case "java.lang.double":
+             if(!(temp instanceof Integer|| temp instanceof Double)){
+                return false;
+             }
+             break;
+
+             case "java.lang.integer":
+             if(!(temp instanceof Integer)){
+                return false;
+             }
+             break;
+        }
+    }
+    return true;
+}
+
 }
