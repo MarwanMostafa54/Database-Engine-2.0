@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.Vector;
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -123,6 +122,9 @@ public class DBApp {
 			}
 			if (!htblColNameValue.containsKey(table.getClusterKey())) {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
+			}
+			if(!Tool.CheckType(htblColNameValue,table)){
+				throw new DBAppException("One of the objects is an invalid Type Corresponding to its Column");
 			}
 			//Update each Btree that exists
 			//With Duplicate Case

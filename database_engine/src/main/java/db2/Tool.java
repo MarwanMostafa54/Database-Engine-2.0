@@ -495,5 +495,34 @@ public static ArrayList<Integer> decoder(Double value){
 
 }
 
+public static boolean CheckType(Hashtable<String, Object> htblColNameValue, Table table){
+    ArrayList<String[]> metaData=Tool.readMetaData(table.getTableName());
+    for(String[] item:metaData){
+        Object temp=htblColNameValue.get(item[1]);
+        if (temp == null) {
+            return false;
+        }
+        switch(item[2].toLowerCase()){
+             case "java.lang.string":
+                    if(!(temp instanceof String)){
+                        return false;
+                    }
+             break;
+
+             case "java.lang.double":
+             if(!(temp instanceof Integer|| temp instanceof Double)){
+                return false;
+             }
+             break;
+
+             case "java.lang.integer":
+             if(!(temp instanceof Integer)){
+                return false;
+             }
+             break;
+        }
+    }
+    return true;
+}
 
 }
