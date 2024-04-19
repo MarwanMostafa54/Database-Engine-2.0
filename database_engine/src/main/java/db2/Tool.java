@@ -369,7 +369,7 @@ public class Tool {
 
     public static Set<String> getColumNameFromMetaData(String tableName) throws IOException {
         Set<String> ColumName = new HashSet<>();
-        try (BufferedReader br = new BufferedReader(new FileReader("data//metadata.csv"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("metadata.csv"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
@@ -403,76 +403,7 @@ public class Tool {
         return resultTuples;
     }
 
-    public static boolean checkCondition(String columnValue, String operator, Object value) throws IllegalArgumentException {
-        // if( columnValue != value)
-        //     throw new IllegalArgumentException("Invalid argument" + value); 
-        switch (operator) {
-            case "=":
-            if (value instanceof String) {
-                return columnValue.equals(value.toString());                
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue == numericValue;
-            }
-            case "!=":
-            if (value instanceof String) {
-                return !columnValue.equals(value.toString());                
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue != numericValue;
-            }
-            case ">":
-            if (value instanceof String) {
-                return columnValue.compareTo(value.toString()) > 0;               
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue > numericValue;
-            }
-            case ">=":
-            if (value instanceof String) {
-                return columnValue.compareTo(value.toString()) >= 0;               
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue >= numericValue;
-            }
-            case "<":
-            if (value instanceof String) {
-                return columnValue.compareTo(value.toString()) < 0;               
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue < numericValue;
-            }
-            case "<=":
-            if (value instanceof String) {
-                return columnValue.compareTo(value.toString()) <= 0;               
-            } else {
-                double columnNumericValue = Double.parseDouble(columnValue);
-                double numericValue = Double.parseDouble(value.toString());
-                return columnNumericValue <= numericValue;
-            }
-            default:
-                throw new IllegalArgumentException("Invalid operator: " + operator);
-        }
-    
-    }
-
-    //STILL DONT KNOW ITS USE
-    public static void insertIntoBtree(){
-
-    }
-
-    //Checks if duplicate has already a hashtable inside hashtable if not then i create a new hashtable for my key
-    public static boolean duplicatesExists(String strColName,int Key,Hashtable<String,Hashtable<Integer,Vector<Double>>> duplicates){
-        if(duplicates.containsKey(strColName)){
-            if(duplicates.get(strColName).containsKey(Key)){
-                return true;
-            }
-        }
+    private static boolean checkCondition(String columnValue, String operator, Object value) {
         return false;
     }
 

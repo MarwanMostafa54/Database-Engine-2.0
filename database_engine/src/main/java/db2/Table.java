@@ -4,16 +4,14 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.Set;
-import java.util.Vector;
 
 public class Table implements Serializable {
     public String tableName;
     public String tableMetaPath;
     public String tablePath;
     public String clusterKey;
-    public Hashtable<String, bplustree> Indices;
+    public Hashtable<String, bplustree> columns;
     public int pageCount;
-    public Hashtable<String,Hashtable<Integer,Vector<Double>>> duplicates;
 
     public Table(String strTableName, String clusteringKey, Hashtable<String, String> htblColNameType)
             throws DBAppException {
@@ -28,7 +26,7 @@ public class Table implements Serializable {
                         throw new DBAppException("Invalid column type.");
                     }
                 }
-                this.Indices = new Hashtable<>();
+                this.columns = new Hashtable<>();
                 this.tableName = strTableName;
                 this.clusterKey = clusteringKey;
                 this.pageCount = 0;
@@ -49,7 +47,7 @@ public class Table implements Serializable {
                 }
                 Tool.serializeTable(this);
                 Tool.WriteInFile(htblColNameType, strTableName, clusteringKey);
-                this.Indices.put(clusteringKey, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
+                this.columns.put(clusteringKey, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
             } else {
                 throw new DBAppException("Table Name already exists");
             }
@@ -72,12 +70,12 @@ public class Table implements Serializable {
         return clusterKey;
     }
 
-    public Hashtable<String, bplustree> getIndices() {
-        return Indices;
+    public Hashtable<String, bplustree> getColumns() {
+        return columns;
     }
 
-    public void addIndex(String columnName, bplustree tree) {
-        Indices.put(columnName, tree);
+    public void addColumn(String columnName, bplustree tree) {
+        columns.put(columnName, tree);
     }
 
     public int getPageCount() {
@@ -112,7 +110,6 @@ public class Table implements Serializable {
     }
 
     public void insertTupleIntoLastPage(Tuple tuple) {
-        if(this.pageCount>0){
         Page p = Tool.deserializePage(this, this.pageCount);
         if (p.isFull()) {
             this.CreateNewPage();
@@ -122,12 +119,6 @@ public class Table implements Serializable {
         } else {
             p.AddTuple(tuple);
             Tool.serializePage(this, p);
-        }}
-        else{
-            this.CreateNewPage();
-            Page p1 = Tool.deserializePage(this, this.pageCount);
-            p1.AddTuple(tuple);
-            Tool.serializePage(this, p1);
         }
         Tool.serializeTable(this);
     }
