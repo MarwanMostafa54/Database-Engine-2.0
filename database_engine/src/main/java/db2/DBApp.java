@@ -107,6 +107,7 @@ public class DBApp {
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
 	//Insert Should be Done,Testing Left
+	//Check if Object is one of my 3 types corresponding to strColname
 	public static void insertIntoTable(String strTableName,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		try {
@@ -198,6 +199,7 @@ public class DBApp {
 	// htblColNameValue holds the key and value. This will be used in search
 	// to identify which rows/tuples to delete.
 	// htblColNameValue enteries are ANDED together ??
+	//Delete Pages not coressponding to pagecount,make new vector
 	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		try {
 
@@ -244,6 +246,8 @@ public class DBApp {
 		}
 	}
 
+	//USE BTREE SEARCH RANGES for SERACH(MIN,MAX)
+	//THEN SORT ARRAYLIST TO DESERIALIZE ONE TIME
 	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
 		ArrayList<Tuple> filteredTuples = new ArrayList<>();
 

@@ -476,14 +476,24 @@ public class Tool {
         return false;
     }
 
-    //MY MATH FUNCTION TO CREATE A ENCODER VALUE
-    public static double encoder(int pageID,int tupleID){
-        return 0;
-    }
+  //MY MATH FUNCTION TO CREATE A ENCODER VALUE
+  public static double encoder(int pageID,int tupleID){
+    double calculate=tupleID/(double)(Tool.readPageSize("config//DBApp.properties")+1);
+    calculate+=pageID;
+    return calculate;
+}
 
-    //TO EXTRACT PAGE ID,TUPLE ID IN A ARRAYLIST FROM ENCODED VALUE
-    public static ArrayList<Integer> decoder(Double value){
-        return null;
-    }
+//TO EXTRACT PAGE ID,TUPLE ID IN A ARRAYLIST FROM ENCODED VALUE
+public static ArrayList<Integer> decoder(Double value){
+    ArrayList<Integer> decode=new ArrayList<Integer>();
+    int temp = (int) Math.floor(value); // Round down the double value to the nearest integer
+    decode.add(temp);
+    double decimalPart = value - Math.floor(value);
+    int Temptuple=(int) (decimalPart*(Tool.readPageSize("config//DBApp.properties")+1));
+    decode.add(Temptuple);
+    return decode;
+
+}
+
 
 }
