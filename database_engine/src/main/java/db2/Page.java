@@ -58,14 +58,6 @@ public class Page implements Serializable {
 		tupleCount--;
 	}
 
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (Tuple tuple : tuples) {
-            sb.append(tuple.toString()).append("   ,   ");
-        }
-        sb.setLength(sb.length() - 5);
-        return sb.toString();
-    }
 	
 
 
