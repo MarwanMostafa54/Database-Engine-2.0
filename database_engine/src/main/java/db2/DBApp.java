@@ -200,7 +200,7 @@ public class DBApp {
 	// to identify which rows/tuples to delete.
 	// htblColNameValue enteries are ANDED together ??
 	//Delete Pages not coressponding to pagecount,make new vector
-	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException { //rework
 		try {
 
 			Table table = Tool.deserializeTable(strTableName);
