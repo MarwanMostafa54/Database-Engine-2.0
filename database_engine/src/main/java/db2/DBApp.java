@@ -6,10 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -48,7 +46,6 @@ public class DBApp {
 	}
 
 	// following method creates a B+tree index
-	//CreateIndex Should be done ,just need Testing
 	public void createIndex(String strTableName,
 			String strColName,
 			String strIndexName) throws DBAppException, IOException {
@@ -72,31 +69,14 @@ public class DBApp {
 						int key = tuple.getValue(strColName).hashCode();
 						j++;
 						Double encoder = Tool.encoder(i, j);
-						//Important I dont add the original unique value to duplicate onloy keep record of its duplicates
-						//So when Updating/Deleting I should check first if there is duplicate and delete/update duplicate instead of original
-						//value in my B+Tree
 						if (t.getColumns().get(strColName).search(key) != null) {
-								//Check Duplicate Again
-								if (!t.duplicates.containsKey(strColName)) {
-									// If not, create a new inner hashtable for the key
-									t.duplicates.put(strColName, new Hashtable<Integer, Vector<Double>>());
-								}
-								Hashtable<Integer, Vector<Double>> innerHashtable = t.duplicates.get(strColName);
-								// Check if the inner hashtable already contains the key
-								if (!innerHashtable.containsKey(key)) {
-   									 // If not, create a new vector for the key
-    								innerHashtable.put(key, new Vector<Double>());
-								}
-                            	// Get the vector associated with the key
-								Vector<Double> vector = innerHashtable.get(key);
-								vector.add(encoder);											
-						}
-					    else {
+
+						} else {
 							t.getColumns().get(strColName).insert(key, encoder);
 						}
 					}
 				}
-				Tool.updateMetaData(strTableName, strColName, strIndexName);
+
 			}
 		} else {
 			throw new DBAppException("Table is not Found in Meta Data");
@@ -105,11 +85,13 @@ public class DBApp {
 
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
+	//Insert Should be Done,Testing Left
+	//Check if Object is one of my 3 types corresponding to strColname
 	public static void insertIntoTable(String strTableName,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		try {
 			Table table = Tool.deserializeTable(strTableName);
-			//Clusterkey exists and check for clustering duplicates
+
 			Set<String> tableColumnNames = Tool.getColumNameFromMetaData(strTableName);
 			for (String columnName : htblColNameValue.keySet()) {
 				if (!tableColumnNames.contains(columnName) && tableColumnNames.size() != htblColNameValue.size()) {
@@ -169,6 +151,7 @@ public class DBApp {
 	// htblColNameValue holds the key and value. This will be used in search
 	// to identify which rows/tuples to delete.
 	// htblColNameValue enteries are ANDED together ??
+	//Delete Pages not coressponding to pagecount,make new vector
 	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		try {
 
@@ -215,6 +198,8 @@ public class DBApp {
 		}
 	}
 
+	//USE BTREE SEARCH RANGES for SERACH(MIN,MAX)
+	//THEN SORT ARRAYLIST TO DESERIALIZE ONE TIME
 	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
 		ArrayList<Tuple> filteredTuples = new ArrayList<>();
 
