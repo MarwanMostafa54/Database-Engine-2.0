@@ -311,45 +311,61 @@ public class DBApp {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
 			}
 
-			if (htblColNameValue.isEmpty()) {
-				Table table2 = Tool.deserializeTable(strTableName);
-				for (int i = 0; i < table2.getPageCount(); i++) {
-					table.deletePage(i);
-				}
-				Tool.serializeTable(table2);
-			} else {
-				SQLTerm[] sqlTerm = new SQLTerm[htblColNameValue.size()];
-				int i = 0;
-
-				for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
-					String columnName = entry.getKey();
-					Object columnValue = entry.getValue();
-					sqlTerm[i++] = new SQLTerm(strTableName, columnName, "=", columnValue);
-				}
-				String[] andSTR = { "AND" };
-				ArrayList<Tuple> toBeDeleted = new ArrayList<>();
-
-				Iterator<Tuple> iterator = selectFromTable(sqlTerm, andSTR);
-				while (iterator.hasNext()) {
-					Tuple tuple = iterator.next();
-					toBeDeleted.add(tuple);
-				}
-
-				for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
-					Page page = Tool.deserializePage(table, pageId);
-
-					for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
-						Tuple tuple = page.getTuple(tupleId);
-
-						for (int k = 0; k < toBeDeleted.size(); k++) {
-							if (((Tuple) toBeDeleted.get(k)).getTupleID() == tuple.getTupleID()) {
-								page.deleteTuple(tupleId);
+			boolean hasBPlus= false;
+			Hashtable<String, bplustree> indices = table.getIndices(); 
+			Set<String> keys=indices.keySet();
+			Set<String> coloumNames = htblColNameValue.keySet();
+			
+			for(String coloumName : coloumNames){
+				for(String key : keys){
+					if(key.equals(coloumName)){
+						indices.get(key).delete(htblColNameValue.get(coloumName).hashCode());
+						hasBPlus=true;
+						break;
+					}
+				}	
+					if(!hasBPlus){
+						if (htblColNameValue.isEmpty()) {
+							Table table2 = Tool.deserializeTable(strTableName);
+							for (int i = 0; i < table2.getPageCount(); i++) {
+								table.deletePage(i);
+							}
+							Tool.serializeTable(table2);
+						} else {
+							SQLTerm[] sqlTerm = new SQLTerm[htblColNameValue.size()];
+							int i = 0;
+			
+							Object columnValue = htblColNameValue.get(coloumName);
+							sqlTerm[i++] = new SQLTerm(strTableName, coloumName, "=", columnValue);
+							
+							String[] andSTR = { "AND" };
+							ArrayList<Tuple> toBeDeleted = new ArrayList<>();
+			
+							Iterator<Tuple> iterator = selectFromTable(sqlTerm, andSTR);
+							while (iterator.hasNext()) {
+								Tuple tuple = iterator.next();
+								toBeDeleted.add(tuple);
+							}
+			
+							for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
+								Page page = Tool.deserializePage(table, pageId);
+			
+								for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
+									Tuple tuple = page.getTuple(tupleId);
+			
+									for (int k = 0; k < toBeDeleted.size(); k++) {
+										if (((Tuple) toBeDeleted.get(k)).getTupleID() == tuple.getTupleID()) {
+											page.deleteTuple(tupleId);
+										}
+									}
+			
+								}
 							}
 						}
-
 					}
-				}
 			}
+
+			
 
 			Tool.serializeTable(table);
 		} catch (IOException e) {

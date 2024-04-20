@@ -1,4 +1,7 @@
 Table Name,Column Name,Column Type,ClusteringKey,IndexName,IndexType
-Student,gpa,java.lang.double,false,GpaIndex,Btree
-Student,name,java.lang.String,false,null,null
-Student,id,java.lang.Integer,true,Clustering Key,Btree
+Student1,gpa,java.lang.double,false,null,null
+Student1,name,java.lang.String,false,null,null
+Student1,id,java.lang.Integer,true,null,null
+Student2,gpa,java.lang.double,false,null,null
+Student2,name,java.lang.String,false,null,null
+Student2,id,java.lang.Integer,true,null,null

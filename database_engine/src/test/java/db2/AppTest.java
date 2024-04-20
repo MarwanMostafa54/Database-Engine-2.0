@@ -22,26 +22,37 @@ public class AppTest {
 
     public static void main(String[] args) throws DBAppException {
         // System.err.println(Tool.readPageSize("config//DBApp.properties"));
-        // String strTableName = "Student1";
+        String strTableName = "Student1";
         // Hashtable htblColNameType = new Hashtable( );
         // htblColNameType.put("id", "java.lang.Integer");
         // htblColNameType.put("name", "java.lang.String");
         // htblColNameType.put("gpa", "java.lang.double");
-        // File dataDir = new File("Tables");
-        // Table t1=new Table(strTableName, "id", htblColNameType);
+        //File dataDir = new File("Tables");
+        //Table t1=new Table(strTableName, "id", htblColNameType);
         // t1.CreateNewPage();
-        // strTableName = "Student2";
+        strTableName = "Student2";
         // htblColNameType = new Hashtable( );
         // htblColNameType.put("id", "java.lang.Integer");
         // htblColNameType.put("name", "java.lang.String");
         // htblColNameType.put("gpa", "java.lang.double");
-        // dataDir = new File("Tables");
-        //  Table t2=new Table(strTableName, "id", htblColNameType);
+        //dataDir = new File("Tables");
+        // Table t2=new Table(strTableName, "id", htblColNameType);
         // t2.CreateNewPage();
         //  Page p = t2.CreateNewPage();
         //    t2.deletePage(2);
         // Tool.updateMetaData("strTableName", "gpa","gpaIndex" );
 
+        Hashtable<String, Object> htblColNameValue = new Hashtable<>();
+        htblColNameValue.put("id", 2343432);
+        htblColNameValue.put("name", "Ahmed Noor");
+        htblColNameValue.put("gpa", 0.95);
+        DBApp.insertIntoTable(strTableName, htblColNameValue);
+
+        htblColNameValue.clear();
+        htblColNameValue.put("id", 453455);
+        htblColNameValue.put("name", "Ahmed Noor");
+        htblColNameValue.put("gpa", 0.95);
+        DBApp.insertIntoTable(strTableName, htblColNameValue);
         // Hashtable<String, Object> sampleData1 = new Hashtable<>();
         // sampleData1.put("ID", 1);
         // sampleData1.put("Name", "John");
