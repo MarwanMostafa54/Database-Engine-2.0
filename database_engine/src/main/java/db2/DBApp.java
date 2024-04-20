@@ -286,7 +286,7 @@ public class DBApp {
 
 	// USE BTREE SEARCH RANGES for SERACH(MIN,MAX)
 	// THEN SORT ARRAYLIST TO DESERIALIZE ONE TIME
-	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
+	public Iterator<Tuple> selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
 		ArrayList<Tuple> filteredTuples = new ArrayList<>();
 
 		for (int i = 0; i < arrSQLTerms.length; i++) {
