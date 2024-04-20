@@ -67,10 +67,15 @@ public class Tuple implements Serializable {
         tuple.put(columnName, value);
     }
 
+    @Override
     public int hashCode() {
         return tuple.get(hashValue).hashCode();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return this.hashCode() == obj.hashCode();
+    }
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (String key : tuple.keySet()) {
