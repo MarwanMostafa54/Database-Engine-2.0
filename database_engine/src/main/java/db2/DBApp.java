@@ -359,37 +359,84 @@ public class DBApp {
 
 	// USE BTREE SEARCH RANGES for SERACH(MIN,MAX)
 	// THEN SORT ARRAYLIST TO DESERIALIZE ONE TIME
-	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
+	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException, IOException {
 		ArrayList<Tuple> filteredTuples = new ArrayList<>();
-
+		
 		for (int i = 0; i < arrSQLTerms.length; i++) {
 			String tableName = arrSQLTerms[i]._strTableName;
 			String columnName = arrSQLTerms[i]._strColumnName;
 			String operator = arrSQLTerms[i]._strOperator;
 			Object value = arrSQLTerms[i]._objValue;
 			Table table = Tool.deserializeTable(tableName);
-			ArrayList<Tuple> currentFilteredTuples = Tool.filterTuplesByOperator(table, columnName, operator, value);
-			if (i == 0) {
-				filteredTuples.addAll(currentFilteredTuples);
-			} else {
-				String logicalOperator = strarrOperators[i - 1];
-				switch (logicalOperator) {
-					case "AND":
-						filteredTuples.retainAll(currentFilteredTuples);
-						break;
-					case "OR":
-						filteredTuples.addAll(currentFilteredTuples);
-						break;
-					case "XOR":
-						List<Tuple> temp = new ArrayList<>(filteredTuples);
-						temp.removeAll(currentFilteredTuples);
-						currentFilteredTuples.removeAll(filteredTuples);
-						filteredTuples.addAll(temp);
-						filteredTuples.addAll(currentFilteredTuples);
-						break;
-					default:
+			Set<String> s1 = table.getIndices().keySet();
+			boolean flag = false;
+			for(String keys : s1){
+				if(keys.equals(columnName)){
+					flag = true;
+					break;
+				}
+			}
+			if(flag == true){
+				// If index exists, use B+ tree search
+				bplustree tree = table.getIndices().get(columnName);
+                ArrayList<Double> pageCodes = new ArrayList<>();
+				if (value instanceof Integer[]) {
+                Integer[] range = (Integer[]) value;
+                pageCodes = tree.search(range[1], range[0]);
+				}
+            	else {
+                throw new IllegalArgumentException("Value should be an Integer[] for range queries.");
+            }
+                ArrayList<Tuple> currentFilteredTuples = Tool.printRange(table, columnName, tree, pageCodes);
+                if (i == 0) {
+                    filteredTuples.addAll(currentFilteredTuples);
+                } else {
+                    String logicalOperator = strarrOperators[i - 1];
+                    switch (logicalOperator.toUpperCase()) {
+                        case "AND":
+                            filteredTuples.retainAll(currentFilteredTuples);
+                            break;
+                        case "OR":
+                            filteredTuples.addAll(currentFilteredTuples);
+                            break;
+                        case "XOR":
+                            List<Tuple> temp = new ArrayList<>(filteredTuples);
+                            temp.removeAll(currentFilteredTuples);
+                            currentFilteredTuples.removeAll(filteredTuples);
+                            filteredTuples.addAll(temp);
+                            filteredTuples.addAll(currentFilteredTuples);
+                            break;
+                        default:
+                            break;
+                    }
+				}
+				
+			}
+			else{
+				 // If index does not exist, filter tuples using operator
+				ArrayList<Tuple> currentFilteredTuples = Tool.filterTuplesByOperator(table, columnName, operator, value);
+				if (i == 0) {
+					filteredTuples.addAll(currentFilteredTuples);
+				} else {
+					String logicalOperator = strarrOperators[i - 1];
+					switch (logicalOperator) {
+						case "AND":
+							filteredTuples.retainAll(currentFilteredTuples);
+							break;
+						case "OR":
+							filteredTuples.addAll(currentFilteredTuples);
+							break;
+						case "XOR":
+							List<Tuple> temp = new ArrayList<>(filteredTuples);
+							temp.removeAll(currentFilteredTuples);
+							currentFilteredTuples.removeAll(filteredTuples);
+							filteredTuples.addAll(temp);
+							filteredTuples.addAll(currentFilteredTuples);
+							break;
+						default:
 
-						break;
+							break;
+					}
 				}
 			}
 		}
@@ -447,11 +494,11 @@ public class DBApp {
 			// htblColNameValue.put("gpa", new Double(0.88));
 			// dbApp.updateTable(strTableName, "1", htblColNameValue);
 
-			Table table = Tool.deserializeTable(strTableName);
-			for (int i = 1; i < 2; i++) {
-			Page page = Tool.deserializePage(table, i);
-			System.out.println(page.toString());
-			}
+			// Table table = Tool.deserializeTable(strTableName);
+			// for (int i = 1; i < 2; i++) {
+			// Page page = Tool.deserializePage(table, i);
+			// System.out.println(page.toString());
+			// }
 
 			// htblColNameValue.clear();
 			// htblColNameValue.clear();
