@@ -308,10 +308,58 @@ public class DBApp {
 				Tool.serializePage(table, page);
 			}
 			
-			if (!OldEntries.isEmpty()) { // Update B-trees From Old To New
-				System.out.println("continue");
-				Tool.UpdateBtrees(table, OldEntries, htblColNameValue, key,metaData);
+			for(String Key:table.getIndices().keySet()){
+				if(!(Key.equals(table.getClusterKey()))){
+                String IndexUsed=OldEntries.get(Key);
+				Object identity2 = strClusteringKeyValue;
+				for (String[] data : metaData) {
+					// System.out.println(data[3]);
+					// System.out.println("In");
+					if (data[2].equalsIgnoreCase("java.lang.double")) {
+					identity = Double.parseDouble(strClusteringKeyValue);
+					// System.out.println(data[2]);
+					break;
+				}
+				if (data[2].equalsIgnoreCase("java.lang.integer")) {
+					identity = Integer.parseInt(strClusteringKeyValue);
+					// System.out.println(data[2]);
+					break;
+				}
 			}
+			int key2=identity2.hashCode();
+			double value;
+			if(table.duplicates.containsKey(Key) && table.duplicates.get(Key).containsKey(key))
+            {//Duplicates for this list exists
+            Vector<Double> Values=table.duplicates.get(table.getClusterKey()).get(key); 
+            value=Values.get(Values.size()-1);
+            Values.remove(Values.size()-1);
+            //Removed old vlaue from Btree which was updated
+            } 
+            else{//No duplicates change one on Search
+                value=tree.search(key);
+                tree.delete(key);
+            }
+			if (table.getIndices().get(Key).search(key) != null) {
+                // Check Duplicate Again
+                if (!table.duplicates.containsKey(Key)) {
+                    // If not, create a new inner hashtable for the key
+                    table.duplicates.put(Key, new Hashtable<Integer, Vector<Double>>());
+                }
+                Hashtable<Integer, Vector<Double>> innerHashtable = table.duplicates.get(Key);
+                // Check if the inner hashtable already contains the key
+                if (!innerHashtable.containsKey(key2)) {
+                    // If not, create a new vector for the key
+                    innerHashtable.put(key2, new Vector<Double>());
+                }
+                // Get the vector associated with the key
+                Vector<Double> vector = innerHashtable.get(key2);
+                vector.add(value);
+            } else {
+                table.getIndices().get(Key).insert(key2, value);
+            }
+
+		}
+		}
 			Tool.serializeTable(table);
 		} catch (Exception e) {
 			throw new DBAppException("Error updating table: " + e.getMessage());
@@ -446,7 +494,7 @@ public class DBApp {
 			// dbApp.createTable(strTableName, "id", htblColNameType);
 			// dbApp.createIndex(strTableName, "gpa", "GpaIndex");
 
-			 Hashtable htblColNameValue = new Hashtable();
+			Hashtable htblColNameValue = new Hashtable();
 			// htblColNameValue.put("id", new Integer(2343432));
 			// htblColNameValue.put("name", new String("Ahmed Noor"));
 			// htblColNameValue.put("gpa", new Double(0.95));
@@ -479,17 +527,21 @@ public class DBApp {
 			// System.out.println(Tool.encoder(1,0));
 			// System.out.println(Tool.decoder(Tool.encoder(1,2)));
 
-			htblColNameValue.clear();
-			htblColNameValue.put("name", new String("MEEEE "));
-			htblColNameValue.put("gpa", new Double(0.88));
-			dbApp.updateTable(strTableName, "123", htblColNameValue);
+			// htblColNameValue.clear();
+			// htblColNameValue.put("name", new String("Why "));
+			// htblColNameValue.put("gpa", new Double(0.88));
+			// dbApp.updateTable(strTableName, "123", htblColNameValue);
 
-			Table table = Tool.deserializeTable(strTableName);
+			// htblColNameValue.clear();
+			// htblColNameValue.put("name", new String("Why "));
+			// htblColNameValue.put("gpa", new Double(0.88));
+			// dbApp.updateTable(strTableName, "555", htblColNameValue);
+			// Table table = Tool.deserializeTable(strTableName);
 			// System.out.println(table.getPageCount());
-			for (int i = 1; i < 2; i++) {
-			Page page = Tool.deserializePage(table, i);
-			System.out.println(page.toString());
-			}
+			// for (int i = 1; i < 2; i++) {
+			// Page page = Tool.deserializePage(table, i);
+			// System.out.println(page.toString());
+			// }
 
 			// htblColNameValue.clear();
 			// htblColNameValue.clear();
