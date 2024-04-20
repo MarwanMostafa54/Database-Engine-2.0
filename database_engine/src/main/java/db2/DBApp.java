@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+
+import javax.print.DocFlavor.STRING;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -151,8 +154,19 @@ public class DBApp {
 					}
 				}
 			}
+			Page p = Tool.deserializePage(table, table.getPageCount());
+			int pageID,tupleID;
+			if(p.isFull()){
+				pageID=table.getPageCount()+1;
+				tupleID=1;
+			}
+			else{
+				pageID=table.getPageCount();
+				tupleID=p.gettupleCount()+1;
+			}
+			double encodedID = Tool.encoder(pageID, tupleID);
 			//Create my new Tuple
-			Tuple tuple = new Tuple(htblColNameValue, table.getClusterKey());
+			Tuple tuple = new Tuple(htblColNameValue, encodedID);
 			//Insert int table's pages
 			table.insertTupleIntoLastPage(tuple);
 			//Save Table
@@ -221,23 +235,32 @@ public class DBApp {
 			if (!htblColNameValue.containsKey(table.getClusterKey())) {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
 			}
+			
+			SQLTerm[] sqlTerm = new SQLTerm[htblColNameValue.size()];
+			int i=0;
+
+			for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
+				String columnName = entry.getKey();
+				Object columnValue = entry.getValue();
+				sqlTerm[i++]=new SQLTerm(strTableName, columnName, "=", columnValue);
+			}
+
+			String[] andSTR={"AND"};
+			ArrayList toBeDeleted = (ArrayList) selectFromTable(sqlTerm, andSTR);
 
 			for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
-				Page page = Tool.deserializePage(table, pageId);
+                Page page = Tool.deserializePage(table, pageId);
 
-				for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
-					Tuple tuple = page.getTuple(tupleId);
-
-					for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
-						String columnName = entry.getKey();
-						Object columnValue = entry.getValue();
-						if (tuple.getColumnValue(columnName).equals(columnValue)) {
+                for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
+                    Tuple tuple = page.getTuple(tupleId);
+					
+					for(int k=0; k<toBeDeleted.size(); k++){
+						if (((Tuple) toBeDeleted.get(k)).getTupleID() == tuple.getTupleID()) {
 							page.deleteTuple(tupleId);
-						}
+						}						
 					}
 
 				}
-				Tool.serializePage(table, page);
 			}
 
 			Tool.serializeTable(table);

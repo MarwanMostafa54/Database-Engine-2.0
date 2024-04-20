@@ -6,17 +6,22 @@ import java.util.Hashtable;
 public class Tuple implements Serializable {
     private Hashtable<String, String> tuple;
     private String hashValue;
+    private double tupleID;
 
     public Tuple() {
         this.tuple = new Hashtable<>();
     }
 
-    public Tuple(Hashtable<String, Object> tuple, String hashValue) {
+    public Tuple(Hashtable<String, Object> tuple, double tupleID) {
         this.tuple = new Hashtable<>();
         for (String key : tuple.keySet()) {
             this.tuple.put(key, tuple.get(key).toString());
         }
-        this.hashValue = hashValue;
+        this.tupleID = tupleID;
+    }
+
+    public double getTupleID(){
+        return this.tupleID;
     }
 
     public String getValue(String column) {
