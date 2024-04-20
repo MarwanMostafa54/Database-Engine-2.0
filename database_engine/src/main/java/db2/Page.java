@@ -38,7 +38,7 @@ public class Page implements Serializable {
     }
 
     public boolean isFull() {
-        return tuples.size()>N;
+        return tuples.size()>=N;
     }
 
     public int AddTuple(Tuple tuple) {
