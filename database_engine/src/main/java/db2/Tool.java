@@ -539,6 +539,39 @@ public static boolean CheckType(Hashtable<String, Object> htblColNameValue, Tabl
     }
     return true;
 }
+public String printRange(Table t, String columnName, bplustree tree, ArrayList<Double> pageCode) throws IOException{
+    StringBuilder tuples = new StringBuilder(); 
+  
+    for (Double code : pageCode) {
+               
+        ArrayList<Integer> temp = Tool.decoder(code); 
+        Page p = deserializePage(t, temp.get(0));
+        Tuple tuple = p.getTuple(temp.get(1));
+        tuples.append(tuple.toString()); 
+        serializePage(t, p);   
+    }
+    if(t.duplicates.containsKey(columnName) ){
+        Hashtable<Integer,Vector<Double>> duplicate = t.duplicates.get(columnName);
+        Set<Map.Entry<Integer,Vector<Double>>> entrySet = duplicate.entrySet();
+
+    for (Map.Entry<Integer,Vector<Double>> entry : entrySet) {
+        Integer key = entry.getKey();
+        Vector<Double> value = entry.getValue();
+        if(tree.search(key) != null  && pageCode.contains(tree.search(key))) 
+            for (Double v : value){
+                
+                ArrayList<Integer> temp2 = Tool.decoder(v);
+                Page p = deserializePage(t, temp2.get(0));
+                Tuple tuple = p.getTuple(temp2.get(1));
+                tuples.append(tuple.toString()); 
+                serializePage(t, p); 
+            }
+        }
+            
+    }
+    return tuples.toString(); // Return the concatenated string
+}
+
 
 public static void UpdateBtrees(Table table,Hashtable<String,Object> Old,Hashtable<String,Object> New,int key){
     for(String strColumnName : Old.keySet()){

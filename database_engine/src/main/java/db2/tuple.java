@@ -7,16 +7,13 @@ public class Tuple implements Serializable {
     private Hashtable<String, String> tuple;
     private Hashtable<String,Object> Hashtable;
     private String hashValue;
+    private double tupleID;
 
     public Tuple() {
         this.tuple = new Hashtable<>();
     }
 
-    public Tuple(Hashtable<String, Object> tuple) {
-        this.Hashtable=new Hashtable<>();
-        for (String key : tuple.keySet()) {
-            this.Hashtable.put(key, tuple.get(key));
-        }
+    public Tuple(Hashtable<String, Object> tuple, double tupleID) {
         this.tuple = new Hashtable<>();
         for (String key : tuple.keySet()) {
             this.tuple.put(key, tuple.get(key).toString());
@@ -52,6 +49,10 @@ public class Tuple implements Serializable {
     }
     public Hashtable<String, Object> getHashtable(){
         return this.Hashtable;
+    }
+
+    public double getTupleID(){
+        return this.tupleID;
     }
 
     public String getValue(String column) {
