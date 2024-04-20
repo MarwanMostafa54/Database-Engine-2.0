@@ -8,55 +8,53 @@ public class Page implements Serializable {
     private Vector<Tuple> tuples;
     private int tupleCount;
     private int N;
-	private int PageId;
-    public Page(int PageId){
-        tupleCount=1;
+    private int PageId;
+
+    public Page(int PageId) {
+        tupleCount = 1;
         tuples = new Vector<Tuple>();
-        this.PageId=PageId;
+        this.PageId = PageId;
         N = Tool.readPageSize("config//DBApp.properties");
     }
-    
+
     public int getN() {
         return N;
     }
+
     public int getPageID() {
         return PageId;
-     }
-    
+    }
+
     public int gettupleCount() {
         return tupleCount;
     }
 
-    public Vector<Tuple> getTuples()
-	{
-		return this.tuples;
-	}
+    public Vector<Tuple> getTuples() {
+        return this.tuples;
+    }
 
     public boolean isEmpty() {
-		return tuples.size() <= 0;
+        return tuples.size() <= 0;
     }
 
-	public boolean isFull() {
-		return tuples.size() >N;
+    public boolean isFull() {
+        return tuples.size() > N;
     }
-    
-    public int AddTuple(Tuple tuple)
-	{
-		tuples.add(tuple);
-		tupleCount++;
-		return tupleCount;
-	}
 
-    public Tuple getTuple(int index) throws IOException
-	{
-		return tuples.get(index);
-	}
+    public int AddTuple(Tuple tuple) {
+        tuples.add(tuple);
+        tupleCount++;
+        return tupleCount;
+    }
 
-	public void deleteTuple(int index)
-	{
-		tuples.remove(index);
-		tupleCount--;
-	}
+    public Tuple getTuple(int index) throws IOException {
+        return tuples.get(index);
+    }
+
+    public void deleteTuple(int index) {
+        tuples.remove(index);
+        tupleCount--;
+    }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -66,7 +64,9 @@ public class Page implements Serializable {
         sb.setLength(sb.length() - 5);
         return sb.toString();
     }
-	
 
+    public void setPageID(int newPageID) {
+        this.PageId = newPageID;
+    }
 
 }

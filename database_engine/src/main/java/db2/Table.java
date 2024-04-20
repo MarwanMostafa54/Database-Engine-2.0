@@ -137,6 +137,7 @@ public class Table implements Serializable {
         p.deleteTuple(tupleID);
         if (p.isEmpty()) {
             this.deletePage(pageID);
+            Tool.shiftPages(pageID,this);
         } else {
             Tool.serializePage(this, p);
         }

@@ -7,8 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+
+import javax.print.DocFlavor.STRING;
+
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -105,8 +109,8 @@ public class DBApp {
 
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
-	//Insert Should be Done,Testing Left
-	//Check if Object is one of my 3 types corresponding to strColname
+	// Insert Should be Done,Testing Left
+	// Check if Object is one of my 3 types corresponding to strColname
 	public static void insertIntoTable(String strTableName,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		try {
@@ -123,16 +127,16 @@ public class DBApp {
 			if (!htblColNameValue.containsKey(table.getClusterKey())) {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
 			}
-			if(!Tool.CheckType(htblColNameValue,table)){
-				throw new DBAppException("One of the objects is an invalid Type Corresponding to its Column");
-			}
-			//Update each Btree that exists
-			//With Duplicate Case
-			for(String strColumnName : htblColNameValue.keySet()){
-				if(table.getIndices().containsKey(strColumnName)){
-					int key=htblColNameValue.get(strColumnName).hashCode();
-					Page page=Tool.deserializePage(table,table.getPageCount());
-					double encoder=Tool.encoder(table.getPageCount(),(page.gettupleCount()+1));//gettupleCount()returns last inserted tuple tupleid is the next one
+			// Update each Btree that exists
+			// With Duplicate Case
+			for (String strColumnName : htblColNameValue.keySet()) {
+				if (table.getIndices().containsKey(strColumnName)) {
+					int key = htblColNameValue.get(strColumnName).hashCode();
+					Page page = Tool.deserializePage(table, table.getPageCount());
+					double encoder = Tool.encoder(table.getPageCount(), (page.gettupleCount() + 1));// gettupleCount()returns
+																									// last inserted
+																									// tuple tupleid is
+																									// the next one
 					if (table.getIndices().get(strColumnName).search(key) != null) {
 						// Check Duplicate Again
 						if (!table.duplicates.containsKey(strColumnName)) {
@@ -153,11 +157,21 @@ public class DBApp {
 					}
 				}
 			}
-			//Create my new Tuple
-			Tuple tuple = new Tuple(htblColNameValue, table.getClusterKey());
-			//Insert int table's pages
+			Page p = Tool.deserializePage(table, table.getPageCount());
+			int pageID, tupleID;
+			if (p.isFull()) {
+				pageID = table.getPageCount() + 1;
+				tupleID = 1;
+			} else {
+				pageID = table.getPageCount();
+				tupleID = p.gettupleCount() + 1;
+			}
+			double encodedID = Tool.encoder(pageID, tupleID);
+			// Create my new Tuple
+			Tuple tuple = new Tuple(htblColNameValue, encodedID);
+			// Insert int table's pages
 			table.insertTupleIntoLastPage(tuple);
-			//Save Table
+			// Save Table
 			Tool.serializeTable(table);
 		} catch (Exception e) {
 			throw new DBAppException("Error inserting into table: " + e.getMessage());
@@ -201,8 +215,8 @@ public class DBApp {
 	// htblColNameValue holds the key and value. This will be used in search
 	// to identify which rows/tuples to delete.
 	// htblColNameValue enteries are ANDED together ??
-	//Delete Pages not coressponding to pagecount,make new vector
-	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+	// Delete Pages not coressponding to pagecount,make new vector
+	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException { // rework
 		try {
 
 			Table table = Tool.deserializeTable(strTableName);
@@ -224,22 +238,44 @@ public class DBApp {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
 			}
 
-			for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
-				Page page = Tool.deserializePage(table, pageId);
-
-				for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
-					Tuple tuple = page.getTuple(tupleId);
-
-					for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
-						String columnName = entry.getKey();
-						Object columnValue = entry.getValue();
-						if (tuple.getColumnValue(columnName).equals(columnValue)) {
-							page.deleteTuple(tupleId);
-						}
-					}
-
+			if (htblColNameValue.isEmpty()) {
+				Table table2 = Tool.deserializeTable(strTableName);
+				for (int i = 0; i < table2.getPageCount(); i++) {
+					table.deletePage(i);
 				}
-				Tool.serializePage(table, page);
+				Tool.serializeTable(table2);
+			} else {
+				SQLTerm[] sqlTerm = new SQLTerm[htblColNameValue.size()];
+				int i = 0;
+
+				for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
+					String columnName = entry.getKey();
+					Object columnValue = entry.getValue();
+					sqlTerm[i++] = new SQLTerm(strTableName, columnName, "=", columnValue);
+				}
+				String[] andSTR = { "AND" };
+				ArrayList<Tuple> toBeDeleted = new ArrayList<>();
+
+				Iterator<Tuple> iterator = selectFromTable(sqlTerm, andSTR);
+				while (iterator.hasNext()) {
+					Tuple tuple = iterator.next();
+					toBeDeleted.add(tuple);
+				}
+
+				for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
+					Page page = Tool.deserializePage(table, pageId);
+
+					for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
+						Tuple tuple = page.getTuple(tupleId);
+
+						for (int k = 0; k < toBeDeleted.size(); k++) {
+							if (((Tuple) toBeDeleted.get(k)).getTupleID() == tuple.getTupleID()) {
+								page.deleteTuple(tupleId);
+							}
+						}
+
+					}
+				}
 			}
 
 			Tool.serializeTable(table);
@@ -248,9 +284,9 @@ public class DBApp {
 		}
 	}
 
-	//USE BTREE SEARCH RANGES for SERACH(MIN,MAX)
-	//THEN SORT ARRAYLIST TO DESERIALIZE ONE TIME
-	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
+	// USE BTREE SEARCH RANGES for SERACH(MIN,MAX)
+	// THEN SORT ARRAYLIST TO DESERIALIZE ONE TIME
+	public Iterator<Tuple> selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
 		ArrayList<Tuple> filteredTuples = new ArrayList<>();
 
 		for (int i = 0; i < arrSQLTerms.length; i++) {

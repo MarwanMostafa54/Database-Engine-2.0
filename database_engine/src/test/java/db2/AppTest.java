@@ -29,25 +29,24 @@ public class AppTest {
         htblColNameType.put("gpa", "java.lang.double");
         File dataDir = new File("Tables");
         Table t1=new Table(strTableName, "id", htblColNameType);
-        // t1.CreateNewPage();
-        // strTableName = "Student2";
-        // htblColNameType = new Hashtable( );
-        // htblColNameType.put("id", "java.lang.Integer");
-        // htblColNameType.put("name", "java.lang.String");
-        // htblColNameType.put("gpa", "java.lang.double");
-        // dataDir = new File("Tables");
-        //  Table t2=new Table(strTableName, "id", htblColNameType);
-        // t2.CreateNewPage();
-        //  Page p = t2.CreateNewPage();
-        //    t2.deletePage(2);
-       
+        t1.CreateNewPage();
+        strTableName = "Student2";
+        htblColNameType = new Hashtable( );
+        htblColNameType.put("id", "java.lang.Integer");
+        htblColNameType.put("name", "java.lang.String");
+        htblColNameType.put("gpa", "java.lang.double");
+        dataDir = new File("Tables");
+         Table t2=new Table(strTableName, "id", htblColNameType);
+        t2.CreateNewPage();
+         Page p = t2.CreateNewPage();
+           t2.deletePage(2);
         // Tool.updateMetaData("strTableName", "gpa","gpaIndex" );
 
-         Hashtable<String, Object> sampleData1 = new Hashtable<>();
-         sampleData1.put("id", 1);
-         sampleData1.put("name", "John");
-         sampleData1.put("gpa", 30);
-         System.out.println(Tool.CheckType(sampleData1, t1));
+        // Hashtable<String, Object> sampleData1 = new Hashtable<>();
+        // sampleData1.put("ID", 1);
+        // sampleData1.put("Name", "John");
+        // sampleData1.put("Age", 30);
+
         // Hashtable<String, Object> sampleData2 = new Hashtable<>();
         // sampleData2.put("ID", 2);
         // sampleData2.put("Name", "Alice");
