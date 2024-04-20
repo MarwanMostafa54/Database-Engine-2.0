@@ -391,6 +391,7 @@ public class Tool {
             Page page = deserializePage(table, pageId);
 
             for (Tuple tuple : page.getTuples()) {
+                if(tuple!=null){
                 String columnValue = tuple.getValue(columnName);
 
                 boolean conditionSatisfied = checkCondition(columnValue, operator, value);
@@ -398,6 +399,7 @@ public class Tool {
                 if (conditionSatisfied) {
                     resultTuples.add(tuple);
                 }
+            }
             }
             serializePage(table, page);
         }
@@ -662,5 +664,14 @@ public class Tool {
         }
         return ColumName;
     }
+
+    public static <T> List<T> makeUnique(List<T> list) {
+        // Create a HashSet to store unique elements
+        HashSet<T> set = new HashSet<>(list);
+
+        // Create a new ArrayList from the HashSet
+        return new ArrayList<>(set);
+    }
+
 }
 

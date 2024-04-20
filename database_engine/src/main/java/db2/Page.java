@@ -59,7 +59,8 @@ public class Page implements Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (Tuple tuple : tuples) {
-            sb.append(tuple.toString()).append(" , ");
+            if(tuple!=null){
+            sb.append(tuple.toString()).append(" , ");}
         }
         sb.setLength(sb.length() - 2);
         return sb.toString();

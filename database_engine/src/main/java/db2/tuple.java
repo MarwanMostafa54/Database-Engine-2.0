@@ -69,14 +69,22 @@ public class Tuple implements Serializable {
 
     @Override
     public int hashCode() {
-        return tuple.get(hashValue).hashCode();
-    }
+            if (hashValue != null && tuple.containsKey(hashValue)) {
+                return tuple.get(hashValue).hashCode();
+            } else {
+                // Return a default hash code if hashValue is null or not found in the tuple
+                return super.hashCode();
+            }
+        }
 
     @Override
     public boolean equals(Object obj) {
         return this.hashCode() == obj.hashCode();
     }
     public String toString() {
+        if(this==null){
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
         for (String key : tuple.keySet()) {
             sb.append(tuple.get(key)).append(",");

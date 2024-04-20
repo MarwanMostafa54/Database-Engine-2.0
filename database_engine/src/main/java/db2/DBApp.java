@@ -77,6 +77,7 @@ public class DBApp {
 				Page p = Tool.deserializePage(t, i);
 				int j = 0;
 				for (Tuple tuple : p.getTuples()) {
+					if(tuple!=null){
 					int key = tuple.getValue(strColName).hashCode();
 					j++;
 					Double encoder = Tool.encoder(i, j);
@@ -89,6 +90,7 @@ public class DBApp {
 						t.getIndices().get(strColName).insert(key, encoder);
 					}
 				}
+			}
 			}
 			Tool.updateMetaData(strTableName, strColName, strIndexName);
 			Tool.serializeTable(t);
@@ -122,13 +124,29 @@ public class DBApp {
 			if (!htblColNameValue.containsKey(table.getClusterKey())) {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
 			} else {
-				Double searchResult = table.getIndices().get(table.getClusterKey())
-						.search(htblColNameValue.get(table.getClusterKey()).hashCode());
+				System.out.println("Ok");
+				bplustree tree = table.getIndices().get(table.getClusterKey());
+
+				// Check if the tree object is not null
+				if (tree != null) {
+					// Get the clustering key value from htblColNameValue
+					Object clusteringKeyValue = htblColNameValue.get(table.getClusterKey());
+				
+					// Check if the clustering key value is not null
+					if (clusteringKeyValue != null) {
+						// Compute the hash code of the clustering key value
+						int hashCode = clusteringKeyValue.hashCode();
+				
+						// Invoke the search method on the bplustree object
+						Double searchResult = tree.search(hashCode);
+						System.out.println("Ok");
 				if (searchResult != null)// Duplicate ClusteringKeyValue entered
 				{
 					throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is not Unique.");
 				}
 			}
+		}
+	}
 			// Update each Btree that exists
 			// With Duplicate Case
 
@@ -167,6 +185,7 @@ public class DBApp {
 					System.out.println("PageId" + table.getPageCount());
 					System.out.println(("TupleId" + page.gettupleCount()));
 					System.out.println("Encoded" + encoder);
+					
 					table.getIndices().get(strColumnName).insert(key, encoder);
 				}
 			}
@@ -334,6 +353,7 @@ public class DBApp {
 	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators)
 			throws DBAppException, IOException {
 		ArrayList<Tuple> filteredTuples = new ArrayList<>();
+		ArrayList<Tuple> currentFilteredTuples = new ArrayList<>();
 
 		for (int i = 0; i < arrSQLTerms.length; i++) {
 			String tableName = arrSQLTerms[i]._strTableName;
@@ -341,80 +361,87 @@ public class DBApp {
 			String operator = arrSQLTerms[i]._strOperator;
 			Object value = arrSQLTerms[i]._objValue;
 			Table table = Tool.deserializeTable(tableName);
-			Set<String> s1 = table.getIndices().keySet();
-			boolean flag = false;
-			for (String keys : s1) {
-				if (keys.equals(columnName)) {
-					flag = true;
-					break;
-				}
-			}
-			if (flag == true) {
-				// If index exists, use B+ tree search
-				bplustree tree = table.getIndices().get(columnName);
-				ArrayList<Double> pageCodes = new ArrayList<>();
-				if (value instanceof Integer[]) {
-					Integer[] range = (Integer[]) value;
-					pageCodes = tree.search(range[1], range[0]);
-				} else {
-					throw new IllegalArgumentException("Value should be an Integer[] for range queries.");
-				}
-				ArrayList<Tuple> currentFilteredTuples = Tool.printRange(table, columnName, tree, pageCodes);
-				if (i == 0) {
-					filteredTuples.addAll(currentFilteredTuples);
-				} else {
-					String logicalOperator = strarrOperators[i - 1];
-					switch (logicalOperator.toUpperCase()) {
-						case "AND":
-							filteredTuples.retainAll(currentFilteredTuples);
-							break;
-						case "OR":
-							filteredTuples.addAll(currentFilteredTuples);
-							break;
-						case "XOR":
-							List<Tuple> temp = new ArrayList<>(filteredTuples);
-							temp.removeAll(currentFilteredTuples);
-							currentFilteredTuples.removeAll(filteredTuples);
-							filteredTuples.addAll(temp);
-							filteredTuples.addAll(currentFilteredTuples);
-							break;
-						default:
-							break;
-					}
-				}
 
+			Set<String> indexedColumns = table.getIndices().keySet();
+
+        	boolean hasIndex = indexedColumns.contains(columnName);
+
+        if (hasIndex) {
+            // If index exists, use B+ tree search
+            bplustree tree = table.getIndices().get(columnName);
+            ArrayList<Double> pageCodes = new ArrayList<>();
+			if(operator.equals("=")){
+				pageCodes = tree.search(value.toString().hashCode(), value.toString().hashCode());
+			}
+			else if(operator.equals(">=")){
+				pageCodes = tree.search(value.toString().hashCode(), Integer.MAX_VALUE);
+			}
+			else if(operator.equals(">")){
+				pageCodes = tree.search(value.toString().hashCode() + 1, Integer.MAX_VALUE);
+			}
+			else if(operator.equals("<")){
+				pageCodes = tree.search(Integer.MIN_VALUE, value.toString().hashCode() - 1);
+			}
+			else if(operator.equals("<=")){
+				pageCodes = tree.search(Integer.MIN_VALUE, value.toString().hashCode());
+			}
+			else if(operator.equals("!=")){
+				pageCodes = tree.search(Integer.MIN_VALUE, value.toString().hashCode() - 1);
+				pageCodes.addAll(tree.search(value.toString().hashCode() + 1, Integer.MAX_VALUE));
+			}
+			
+			for(double code : pageCodes){
+				ArrayList<Integer> temp = Tool.decoder(code); 
+				Page p = Tool.deserializePage(table, temp.get(0));
+				Tuple tuple = p.getTuple(temp.get(1));
+				currentFilteredTuples.add(tuple); 
+				Tool.serializePage(table, p);  
+			}
+
+			}
+			else{
+				 // If index does not exist, filter tuples using operator
+				currentFilteredTuples = Tool.filterTuplesByOperator(table, columnName, operator, value);
+			}
+
+			if (i == 0) {
+				filteredTuples.addAll(currentFilteredTuples);
 			} else {
-				// If index does not exist, filter tuples using operator
-				ArrayList<Tuple> currentFilteredTuples = Tool.filterTuplesByOperator(table, columnName, operator,
-						value);
-				if (i == 0) {
-					filteredTuples.addAll(currentFilteredTuples);
-				} else {
-					String logicalOperator = strarrOperators[i - 1];
-					switch (logicalOperator) {
-						case "AND":
-							filteredTuples.retainAll(currentFilteredTuples);
-							break;
-						case "OR":
-							filteredTuples.addAll(currentFilteredTuples);
-							break;
-						case "XOR":
-							List<Tuple> temp = new ArrayList<>(filteredTuples);
-							temp.removeAll(currentFilteredTuples);
-							currentFilteredTuples.removeAll(filteredTuples);
-							filteredTuples.addAll(temp);
-							filteredTuples.addAll(currentFilteredTuples);
-							break;
-						default:
-
-							break;
+				String logicalOperator = strarrOperators[i - 1];
+				switch (logicalOperator) {
+					case "AND":
+					ArrayList<Tuple> temp1= new ArrayList<Tuple>();
+					for (Tuple tuple : filteredTuples) {
+						for (Tuple tuple1 : currentFilteredTuples){
+							if(tuple1.toString().equals(tuple.toString())){
+							temp1.add(tuple);
+							
+						}
+						} 
 					}
+					filteredTuples = temp1;
+						// filteredTuples.retainAll(currentFilteredTuples);
+						break;
+					case "OR":
+						filteredTuples.addAll(currentFilteredTuples);
+						break;
+					case "XOR":
+						List<Tuple> temp = new ArrayList<>(filteredTuples);
+						temp.removeAll(currentFilteredTuples);
+						currentFilteredTuples.removeAll(filteredTuples);
+						filteredTuples.addAll(temp);
+						filteredTuples.addAll(currentFilteredTuples);
+						break;
+					default:
+
+						break;
 				}
 			}
+
 		}
+
 		return filteredTuples.iterator();
 	}
-
 	// Make Note of Order of Hashtable
 	// Create Index Btree Not Serializable with its subclasses
 	public static void main(String[] args) {
@@ -424,39 +451,40 @@ public class DBApp {
 			String strTableName = "Student";
 			DBApp dbApp = new DBApp();
 
-			// Hashtable htblColNameType = new Hashtable();
-			// htblColNameType.put("id", "java.lang.Integer");
-			// htblColNameType.put("name", "java.lang.String");
-			// htblColNameType.put("gpa", "java.lang.double");
+			Hashtable htblColNameType = new Hashtable();
+			htblColNameType.put("id", "java.lang.Integer");
+			htblColNameType.put("name", "java.lang.String");
+			htblColNameType.put("gpa", "java.lang.double");
 			// dbApp.createTable(strTableName, "id", htblColNameType);
 			// dbApp.createIndex(strTableName, "gpa", "GpaIndex");
 
-			Hashtable htblColNameValue = new Hashtable();
-			// htblColNameValue.put("id", new Integer(23));
+			 Hashtable htblColNameValue = new Hashtable();
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", new Integer(55));
+			// htblColNameValue.put("name", new String("Marwan"));
+			// htblColNameValue.put("gpa", new Double(0.95));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
+
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", new Integer(56));
 			// htblColNameValue.put("name", new String("Ahmed Noor"));
 			// htblColNameValue.put("gpa", new Double(0.95));
 			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
 			// htblColNameValue.clear();
-			// htblColNameValue.put("id", new Integer(8));
-			// htblColNameValue.put("name", new String("Ahmed Noor"));
-			// htblColNameValue.put("gpa", new Double(0.95));
-			// dbApp.insertIntoTable(strTableName, htblColNameValue);
-
-			// htblColNameValue.clear();
-			// htblColNameValue.put("id", new Integer(9));
+			// htblColNameValue.put("id", new Integer(57));
 			// htblColNameValue.put("name", new String("Dalia Noor"));
 			// htblColNameValue.put("gpa", new Double(1.25));
 			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
 			// htblColNameValue.clear();
-			// htblColNameValue.put("id", new Integer(11));
+			// htblColNameValue.put("id", new Integer(58));
 			// htblColNameValue.put("name", new String("New"));
 			// htblColNameValue.put("gpa", new Double(1.5));
 			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
 			// htblColNameValue.clear();
-			// htblColNameValue.put("id", new Integer(12));
+			// htblColNameValue.put("id", new Integer(59));
 			// htblColNameValue.put("name", new String("MO"));
 			// htblColNameValue.put("gpa", new Double(2.5));
 			// dbApp.insertIntoTable(strTableName, htblColNameValue);
@@ -465,27 +493,44 @@ public class DBApp {
 			// System.out.println(Tool.decoder(Tool.encoder(1, 2)));
 
 			// htblColNameValue.clear();
+			// htblColNameValue.put("gpa", new Double(2.5));
+			// htblColNameValue.put("name", new String("MO"));
+			// dbApp.deleteFromTable(strTableName, htblColNameValue);
+
+			Table table = Tool.deserializeTable(strTableName);
+			// table.CreateNewPage();
+			System.out.println(table.getPageCount());
+			for (int i = 1; i <= table.getPageCount(); i++) {
+			Page page = Tool.deserializePage(table, i);
+			System.out.println(page.toString());
+			}
+
+			// htblColNameValue.clear();
 			// htblColNameValue.put("name", new String("MEEEE "));
 			// htblColNameValue.put("gpa", new Double(0.88));
-			// dbApp.updateTable(strTableName, "123", htblColNameValue);
+			// dbApp.updateTable(strTableName, "55", htblColNameValue);
 
-			// Table table = Tool.deserializeTable(strTableName);
-			// table.CreateNewPage();
+			
+			// htblColNameValue.clear();
+			// htblColNameValue.put("name", new String("nice "));
+			// htblColNameValue.put("gpa", new Double(0.88));
+			// dbApp.updateTable(strTableName, "9", htblColNameValue);
+			
+			//  table = Tool.deserializeTable(strTableName);
+			// // table.CreateNewPage();
 			// System.out.println(table.getPageCount());
 			// for (int i = 1; i < 2; i++) {
 			// Page page = Tool.deserializePage(table, i);
 			// System.out.println(page.toString());
 			// }
-			// htblColNameValue.clear();
-			// htblColNameValue.put("name", new String("nice "));
-			// htblColNameValue.put("gpa", new Double(0.88));
-			// dbApp.updateTable(strTableName, "9", htblColNameValue);
 
+			
+			// // Table table = Tool.deserializeTable(strTableName);
+			// for (int i = 1; i < 3; i++) {
+			// 	Page page = Tool.deserializePage(table, i);
+			// 	System.out.println(page.toString());
+			// 	}
 
-			// htblColNameValue.clear();
-			// htblColNameValue.put("gpa", new Double(0.95));
-			// dbApp.deleteFromTable(strTableName, htblColNameValue);
-			// Table table = Tool.deserializeTable(strTableName);
 			// if (table.getIndices().containsKey("gpa")) {
 			// 	System.out.println("nice");
 			// }
@@ -521,17 +566,28 @@ public class DBApp {
 			// System.out.println(page.toString());
 			// }
 
-			// SQLTerm[] arrSQLTerms;
-			// arrSQLTerms = new SQLTerm[2];
-			// arrSQLTerms[0]._strTableName = "Student";
-			// arrSQLTerms[0]._strColumnName= "name";
-			// arrSQLTerms[0]._strOperator = "=";
-			// arrSQLTerms[0]._objValue = "John Noor";
+			SQLTerm[] arrSQLTerms;
+			arrSQLTerms = new SQLTerm[2];
+			for(int i = 0 ; i < arrSQLTerms.length ; i++){
+				arrSQLTerms[i] = new SQLTerm();
+			}
+			arrSQLTerms[0]._strTableName = "Student";
+			arrSQLTerms[0]._strColumnName= "name";
+			arrSQLTerms[0]._strOperator = "=";
+			arrSQLTerms[0]._objValue = "MO";
 
-			// arrSQLTerms[1]._strTableName = "Student";
-			// arrSQLTerms[1]._strColumnName= "gpa";
-			// arrSQLTerms[1]._strOperator = "<";
-			// arrSQLTerms[1]._objValue = new Double( 1.6 );
+			arrSQLTerms[1]._strTableName = "Student";
+			arrSQLTerms[1]._strColumnName= "gpa";
+			arrSQLTerms[1]._strOperator = "=";
+			arrSQLTerms[1]._objValue = new Double( 2.5);
+
+			String[]strarrOperators = new String[1];
+			strarrOperators[0] = "AND";
+			//select * from Student where name = "John Noor" or gpa = 1.5;
+			Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
+			while(resultSet.hasNext()){
+				System.out.println(resultSet.next());
+			}
 
 			// String[]strarrOperators = new String[1];
 			// strarrOperators[0] = "OR";
