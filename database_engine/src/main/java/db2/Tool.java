@@ -87,7 +87,7 @@ public class Tool {
 
     public static void serializePage(Table T, Page P) {
         try {
-            String path = "Tables/" + T.getTableName() + "/" + T.getTableName() + T.getPageCount() + ".ser";
+            String path = "Tables/" + T.getTableName() + "/" + T.getTableName() + P.getPageID() + ".ser";
             path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
             File file = new File(path);
             FileOutputStream fileAccess;
@@ -106,7 +106,6 @@ public class Tool {
         Page page = null;
         try {
             String path = "Tables/" + T.getTableName() + "/" + T.getTableName() + pageNumber + ".ser";
-            path = path.replaceAll("[^a-zA-Z0-9()_./+]", "");
             FileInputStream fileAccess = new FileInputStream(path);
             ObjectInputStream objectAccess = new ObjectInputStream(fileAccess);
             page = (Page) objectAccess.readObject();
@@ -288,7 +287,7 @@ public class Tool {
 
     public static boolean checker(ArrayList<String[]> metaData, String strColName) {
         for (String[] data : metaData) {
-            if (data[2].equals(strColName)) {
+            if (data[1].equals(strColName)) {
                 return true; // Column name exists in metadata
             }
         }
@@ -362,7 +361,7 @@ public class Tool {
         }
 
         catch (Exception E) {
-            System.out.println("Failed to update metadata.csv!");
+            System.out.println("Failed to update metadata.csv! Try Again and Check that No extra Empty Lines in CSV File");
             E.printStackTrace();
         }
     }
@@ -512,6 +511,7 @@ public class Tool {
 public static boolean CheckType(Hashtable<String, Object> htblColNameValue, Table table){
     ArrayList<String[]> metaData=Tool.readMetaData(table.getTableName());
     for(String[] item:metaData){
+        if(htblColNameValue.containsKey(item[1])){
         Object temp=htblColNameValue.get(item[1]);
         if (temp == null) {
             return false;
@@ -536,7 +536,49 @@ public static boolean CheckType(Hashtable<String, Object> htblColNameValue, Tabl
              break;
         }
     }
+    }
     return true;
 }
 
+public static void UpdateBtrees(Table table,Hashtable<String,Object> Old,Hashtable<String,Object> New,int key){
+    for(String strColumnName : Old.keySet()){
+        Double value;
+        if(table.getIndices().containsKey(strColumnName)){
+            bplustree tree=table.getIndices().get(strColumnName);
+            key=Old.get(strColumnName).hashCode();//OLd value to delete from table
+            if(table.duplicates.containsKey(strColumnName) && table.duplicates.get(strColumnName).containsKey(key))
+            {//Duplicates for this list exists
+            Vector<Double> Values=table.duplicates.get(table.getClusterKey()).get(key); 
+            value=Values.get(Values.size()-1);
+            Values.remove(Values.size()-1);
+            //Removed old vlaue from Btree which was updated
+
+            } 
+            else{//No duplicates change one on Search
+                value=tree.search(key);
+                tree.delete(key);
+            }
+
+            key=New.get(strColumnName).hashCode();
+            if (table.getIndices().get(strColumnName).search(key) != null) {
+                // Check Duplicate Again
+                if (!table.duplicates.containsKey(strColumnName)) {
+                    // If not, create a new inner hashtable for the key
+                    table.duplicates.put(strColumnName, new Hashtable<Integer, Vector<Double>>());
+                }
+                Hashtable<Integer, Vector<Double>> innerHashtable = table.duplicates.get(strColumnName);
+                // Check if the inner hashtable already contains the key
+                if (!innerHashtable.containsKey(key)) {
+                    // If not, create a new vector for the key
+                    innerHashtable.put(key, new Vector<Double>());
+                }
+                // Get the vector associated with the key
+                Vector<Double> vector = innerHashtable.get(key);
+                vector.add(value);
+            } else {
+                table.getIndices().get(strColumnName).insert(key, value);
+            }
+        }
+    }
+}
 }

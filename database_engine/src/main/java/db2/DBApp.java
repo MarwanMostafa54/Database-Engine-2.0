@@ -9,10 +9,11 @@ import java.util.Set;
 import java.util.Vector;
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
+
 import java.util.ArrayList;
 import java.util.Hashtable;
 
+//
 public class DBApp {
 
 	public DBApp() {
@@ -43,8 +44,9 @@ public class DBApp {
 	// htblColNameValue will have the column name as key and the data
 	// type as value
 	public void createTable(String strTableName, String strClusteringKeyColumn,
-			Hashtable<String, String> htblColNameType) throws DBAppException {
-		new Table(strTableName, strClusteringKeyColumn, htblColNameType);
+			Hashtable<String, String> htblColNameType) throws DBAppException, IOException {
+		Table table = new Table(strTableName, strClusteringKeyColumn, htblColNameType);
+		this.createIndex(strTableName, table.getClusterKey(), "Clustering Key");
 	}
 
 	// following method creates a B+tree index
@@ -53,6 +55,7 @@ public class DBApp {
 			String strColName,
 			String strIndexName) throws DBAppException, IOException {
 		ArrayList<String[]> metaData = Tool.readMetaData(strTableName);
+
 		if (!Tool.isTableUnique(strTableName)) {
 			if (!Tool.checker(metaData, strColName)) {
 				throw new DBAppException("Column " + strColName + "  name does not exist");
@@ -60,12 +63,15 @@ public class DBApp {
 
 			else {
 				Table t = Tool.deserializeTable(strTableName);
+				if (t.Indices.containsKey(strColName) && (strColName.equals(t.getClusterKey()))) {
+					throw new DBAppException("Column " + strColName + " is the Clustering Key,Already sorted.");
+				}
 				if (t.Indices.containsKey(strColName)) {
 					throw new DBAppException("Column " + strColName + " index already created.");
 				}
 
 				t.addIndex(strColName, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
-				for (int i = 0; i < t.getPageCount(); i++) {
+				for (int i = 1; i <= t.getPageCount(); i++) {
 					Page p = Tool.deserializePage(t, i);
 					int j = 0;
 					for (Tuple tuple : p.getTuples()) {
@@ -98,6 +104,7 @@ public class DBApp {
 					}
 				}
 				Tool.updateMetaData(strTableName, strColName, strIndexName);
+				Tool.serializeTable(t);
 			}
 		} else {
 			throw new DBAppException("Table is not Found in Meta Data");
@@ -106,13 +113,17 @@ public class DBApp {
 
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
-	//Insert Should be Done,Testing Left
-	//Check if Object is one of my 3 types corresponding to strColname
+	// Insert Should be Done,Testing Left
+	// Check if Object is one of my 3 types corresponding to strColname
+	// Contains Duplicated Values
 	public static void insertIntoTable(String strTableName,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		try {
 			Table table = Tool.deserializeTable(strTableName);
 			// Clusterkey exists and check for clustering duplicates
+			if (!Tool.CheckType(htblColNameValue, table)) {
+				throw new DBAppException("Wrong Type corresponding to its Column");
+			}
 			Set<String> tableColumnNames = Tool.getColumNameFromMetaData(strTableName);
 			for (String columnName : htblColNameValue.keySet()) {
 				if (!tableColumnNames.contains(columnName) && tableColumnNames.size() != htblColNameValue.size()) {
@@ -124,14 +135,25 @@ public class DBApp {
 			if (!htblColNameValue.containsKey(table.getClusterKey())) {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
 			}
-			//Update each Btree that exists
-			//With Duplicate Case
-			for(String strColumnName : htblColNameValue.keySet()){
-				if(table.getIndices().containsKey(strColumnName)){
-					int key=htblColNameValue.get(strColumnName).hashCode();
-					Page page=Tool.deserializePage(table,table.getPageCount());
-					double encoder=Tool.encoder(table.getPageCount(),(page.gettupleCount()+1));//gettupleCount()returns last inserted tuple tupleid is the next one
-					if (table.getIndices().get(strColumnName).search(key) != null) {
+			else{
+				Double searchResult = table.getIndices().get(table.getClusterKey()).search(htblColNameValue.get(table.getClusterKey()).hashCode());
+				if(searchResult != null)//Duplicate ClusteringKeyValue entered
+				{
+					throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is not Unique.");
+				}
+			}
+			// Update each Btree that exists
+			// With Duplicate Case
+			for (String strColumnName : htblColNameValue.keySet()) {
+				if (table.getIndices().containsKey(strColumnName) && table.pageCount>0) {
+					int key = htblColNameValue.get(strColumnName).hashCode();
+					Page page = Tool.deserializePage(table, table.getPageCount());
+					double encoder = Tool.encoder(table.getPageCount(), (page.gettupleCount() + 1));// gettupleCount()returns
+																									// last inserted
+																									// tuple tupleid is
+																									// the next one
+						Double searchResult = table.getIndices().get(strColumnName).search(key);
+				        if (searchResult != null ) {
 						// Check Duplicate Again
 						if (!table.duplicates.containsKey(strColumnName)) {
 							// If not, create a new inner hashtable for the key
@@ -151,11 +173,11 @@ public class DBApp {
 					}
 				}
 			}
-			//Create my new Tuple
-			Tuple tuple = new Tuple(htblColNameValue, table.getClusterKey());
-			//Insert int table's pages
+			// Create my new Tuple
+			Tuple tuple = new Tuple(htblColNameValue);
+			// Insert int table's pages
 			table.insertTupleIntoLastPage(tuple);
-			//Save Table
+			// Save Table
 			Tool.serializeTable(table);
 		} catch (Exception e) {
 			throw new DBAppException("Error inserting into table: " + e.getMessage());
@@ -166,31 +188,85 @@ public class DBApp {
 	// htblColNameValue holds the key and new value
 	// htblColNameValue will not include clustering key as column name
 	// strClusteringKeyValue is the value to look for to find the row to update.
-	public void updateTable(String strTableName, // suspicious //Update is Wrong needs Rework
-			String strClusteringKeyValue,
+	// Problem with UpdateTable SSOLVED WITH ORDER ALSO ONLY LEFT TO TEST BTREE
+	// INSERT PLUS UPDATE BTREES
+	public void updateTable(String strTableName, String strClusteringKeyValue,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
-		try {
-			Table table = Tool.deserializeTable(strTableName);
-			int key = strClusteringKeyValue.hashCode();
-			Double temp = table.getIndices().get(table.clusterKey).search(key);
-			if (temp != null) {
-				String encoder = temp + "";
-				String[] data = encoder.split(".");
-				int pageID = Integer.parseInt(data[0]);
-				int tupleID = Integer.parseInt(data[1]);
-				Page p = Tool.deserializePage(table, pageID);
-				Tuple t = p.getTuple(tupleID);
-				// Update the specified columns with the new values
-				for (String columnName : htblColNameValue.keySet()) {
-					t.setValue(columnName, htblColNameValue.get(columnName).toString());
+		ArrayList<String[]> metaData = Tool.readMetaData(strTableName);
+		if (strClusteringKeyValue.isEmpty()) {
+			throw new DBAppException("Empty ClusteringKeyValue Entered");
+		}
+		if (metaData.isEmpty()) {
+			throw new DBAppException(strTableName + " table does not exist");
+		}
+
+		Object identity = strClusteringKeyValue;
+		for (String[] data : metaData) {
+			// System.out.println(data[3]);
+			if (data[3].equals("true")) {
+				// System.out.println("In");
+				if (data[2].equalsIgnoreCase("java.lang.double")) {
+					identity = Double.parseDouble(strClusteringKeyValue);
+					// System.out.println(data[2]);
+					break;
 				}
-				Tool.serializePage(table, p);
-			} else {
-				throw new DBAppException("Tuple with clustering key value '" + strClusteringKeyValue + "' not found.");
+				if (data[2].equalsIgnoreCase("java.lang.integer")) {
+					identity = Integer.parseInt(strClusteringKeyValue);
+					// System.out.println(data[2]);
+					break;
+				}
+
 			}
 		}
 
-		catch (Exception e) {
+		try {
+			Tuple old;
+			Hashtable<String, Object> OldEntries = new Hashtable<>();
+			Table table = Tool.deserializeTable(strTableName);
+			Hashtable<String, Object> temp = new Hashtable<>();
+			temp.put(table.getClusterKey(), identity);
+			if (!Tool.CheckType(htblColNameValue, table)) {
+				throw new DBAppException("Wrong Type corresponding to its Column");
+			}
+			if (!Tool.CheckType(temp, table)) {
+				throw new DBAppException("Wrong Type corresponding to Clustering Key Column");
+			}
+
+			if (htblColNameValue.containsKey(table.getClusterKey())) {
+				throw new DBAppException("Clustering key included in my htblColNameValue");
+			}
+			int key = identity.hashCode();
+
+			bplustree tree = table.getIndices().get(table.getClusterKey());
+			if (tree.search(key) == null || tree.search(key) == 0) {
+				throw new DBAppException("Clustering Key Value Does Not Exist");
+			}
+			if (table.duplicates.containsKey(table.getClusterKey())
+					&& table.duplicates.get(table.getClusterKey()).containsKey(key)) {
+				// Duplicates for this list exist
+				Vector<Double> Values = table.duplicates.get(table.getClusterKey()).get(key);
+				Double value = Values.get(Values.size() - 1);
+				ArrayList<Integer> decode = Tool.decoder(value);
+				Page page = Tool.deserializePage(table, decode.get(0));
+				old = page.getTuple(decode.get(1));
+				OldEntries = old.getHashtable();
+				page.getTuple(decode.get(1)).updateTuple(htblColNameValue, table.getClusterKey());
+				Tool.serializePage(table, page);
+			} else {
+				// No duplicates, change one on Search
+				Double value = tree.search(key);
+				ArrayList<Integer> decode = Tool.decoder(value);
+				Page page = Tool.deserializePage(table, decode.get(0));
+				old = page.getTuple(decode.get(1));
+				OldEntries = old.getHashtable();
+				page.getTuple(decode.get(1)).updateTuple(htblColNameValue, table.getClusterKey());
+				Tool.serializePage(table, page);
+			}
+			if (!OldEntries.isEmpty()) { // Update B-trees From Old To New
+				Tool.UpdateBtrees(table, OldEntries, htblColNameValue, key);
+			}
+			Tool.serializeTable(table);
+		} catch (Exception e) {
 			throw new DBAppException("Error updating table: " + e.getMessage());
 		}
 	}
@@ -199,8 +275,8 @@ public class DBApp {
 	// htblColNameValue holds the key and value. This will be used in search
 	// to identify which rows/tuples to delete.
 	// htblColNameValue enteries are ANDED together ??
-	//Delete Pages not coressponding to pagecount,make new vector
-	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException { //rework
+	// Delete Pages not coressponding to pagecount,make new vector
+	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException { // rework
 		try {
 
 			Table table = Tool.deserializeTable(strTableName);
@@ -222,10 +298,10 @@ public class DBApp {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
 			}
 
-			for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
+			for (int pageId = 1; pageId < table.getPageCount(); pageId++) {
 				Page page = Tool.deserializePage(table, pageId);
 
-				for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
+				for (int tupleId = 1; tupleId <= page.gettupleCount(); tupleId++) {
 					Tuple tuple = page.getTuple(tupleId);
 
 					for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
@@ -246,8 +322,8 @@ public class DBApp {
 		}
 	}
 
-	//USE BTREE SEARCH RANGES for SERACH(MIN,MAX)
-	//THEN SORT ARRAYLIST TO DESERIALIZE ONE TIME
+	// USE BTREE SEARCH RANGES for SERACH(MIN,MAX)
+	// THEN SORT ARRAYLIST TO DESERIALIZE ONE TIME
 	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
 		ArrayList<Tuple> filteredTuples = new ArrayList<>();
 
@@ -285,70 +361,93 @@ public class DBApp {
 		return filteredTuples.iterator();
 	}
 
+	// Make Note of Order of Hashtable
+	// Create Index Btree Not Serializable with its subclasses
 	public static void main(String[] args) {
 		init();
 
-		// try{
-		// String strTableName = "Student";
-		// DBApp dbApp = new DBApp( );
+		try {
+			String strTableName = "Student";
+			DBApp dbApp = new DBApp();
 
-		// Hashtable htblColNameType = new Hashtable( );
-		// htblColNameType.put("id", "java.lang.Integer");
-		// htblColNameType.put("name", "java.lang.String");
-		// htblColNameType.put("gpa", "java.lang.double");
-		// dbApp.createTable( strTableName, "id", htblColNameType );
-		// dbApp.createIndex( strTableName, "gpa", "gpaIndex" );
+			// Hashtable htblColNameType = new Hashtable();
+			// htblColNameType.put("id", "java.lang.Integer");
+			// htblColNameType.put("name", "java.lang.String");
+			// htblColNameType.put("gpa", "java.lang.double");
+			// dbApp.createTable(strTableName, "id", htblColNameType);
+			// dbApp.createIndex(strTableName, "gpa", "GpaIndex");
 
-		// Hashtable htblColNameValue = new Hashtable( );
-		// htblColNameValue.put("id", new Integer( 2343432 ));
-		// htblColNameValue.put("name", new String("Ahmed Noor" ) );
-		// htblColNameValue.put("gpa", new Double( 0.95 ) );
-		// dbApp.insertIntoTable( strTableName , htblColNameValue );
+			// Hashtable htblColNameValue = new Hashtable();
+			// htblColNameValue.put("id", new Integer(2343432));
+			// htblColNameValue.put("name", new String("Ahmed Noor"));
+			// htblColNameValue.put("gpa", new Double(0.95));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-		// htblColNameValue.clear( );
-		// htblColNameValue.put("id", new Integer( 453455 ));
-		// htblColNameValue.put("name", new String("Ahmed Noor" ) );
-		// htblColNameValue.put("gpa", new Double( 0.95 ) );
-		// dbApp.insertIntoTable( strTableName , htblColNameValue );
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", new Integer(453455));
+			// htblColNameValue.put("name", new String("Ahmed Noor"));
+			// htblColNameValue.put("gpa", new Double(0.95));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-		// htblColNameValue.clear( );
-		// htblColNameValue.put("id", new Integer( 5674567 ));
-		// htblColNameValue.put("name", new String("Dalia Noor" ) );
-		// htblColNameValue.put("gpa", new Double( 1.25 ) );
-		// dbApp.insertIntoTable( strTableName , htblColNameValue );
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", new Integer(5674567));
+			// htblColNameValue.put("name", new String("Dalia Noor"));
+			// htblColNameValue.put("gpa", new Double(1.25));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-		// htblColNameValue.clear( );
-		// htblColNameValue.put("id", new Integer( 23498 ));
-		// htblColNameValue.put("name", new String("John Noor" ) );
-		// htblColNameValue.put("gpa", new Double( 1.5 ) );
-		// dbApp.insertIntoTable( strTableName , htblColNameValue );
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", new Integer(555));
+			// htblColNameValue.put("name", new String("New"));
+			// htblColNameValue.put("gpa", new Double(1.5));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-		// htblColNameValue.clear( );
-		// htblColNameValue.put("id", new Integer( 78452 ));
-		// htblColNameValue.put("name", new String("Zaky Noor" ) );
-		// htblColNameValue.put("gpa", new Double( 0.88 ) );
-		// dbApp.insertIntoTable( strTableName , htblColNameValue );
+			// htblColNameValue.clear();
+			// htblColNameValue.put("id", new Integer(123));
+			// htblColNameValue.put("name", new String("MO"));
+			// htblColNameValue.put("gpa", new Double(2.5));
+			// dbApp.insertIntoTable(strTableName, htblColNameValue);
 
-		// SQLTerm[] arrSQLTerms;
-		// arrSQLTerms = new SQLTerm[2];
-		// arrSQLTerms[0]._strTableName = "Student";
-		// arrSQLTerms[0]._strColumnName= "name";
-		// arrSQLTerms[0]._strOperator = "=";
-		// arrSQLTerms[0]._objValue = "John Noor";
+			// htblColNameValue.clear();
+			// htblColNameValue.put("name", new String("MEEEE "));
+			// htblColNameValue.put("gpa", new Double(0.88));
+			// dbApp.updateTable(strTableName, "1", htblColNameValue);
 
-		// arrSQLTerms[1]._strTableName = "Student";
-		// arrSQLTerms[1]._strColumnName= "gpa";
-		// arrSQLTerms[1]._strOperator = "=";
-		// arrSQLTerms[1]._objValue = new Double( 1.5 );
+			Table table = Tool.deserializeTable(strTableName);
+			for (int i = 1; i < 2; i++) {
+			Page page = Tool.deserializePage(table, i);
+			System.out.println(page.toString());
+			}
 
-		// String[]strarrOperators = new String[1];
-		// strarrOperators[0] = "OR";
-		// // select * from Student where name = "John Noor" or gpa = 1.5;
-		// Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
-		// }
-		// catch(Exception exp){
-		// exp.printStackTrace( );
-		// }
+			// htblColNameValue.clear();
+			// htblColNameValue.clear();
+			// htblColNameValue.put("name", new String("New Version"));
+			// htblColNameValue.put("gpa", new Double(0.93));
+			// dbApp.updateTable(strTableName, "5674567", htblColNameValue);
+
+			// table = Tool.deserializeTable(strTableName);
+			// for (int i = 1; i < 6; i++) {
+			// Page page = Tool.deserializePage(table, i);
+			// System.out.println(page.toString());
+			// }
+
+			// SQLTerm[] arrSQLTerms;
+			// arrSQLTerms = new SQLTerm[2];
+			// arrSQLTerms[0]._strTableName = "Student";
+			// arrSQLTerms[0]._strColumnName= "name";
+			// arrSQLTerms[0]._strOperator = "=";
+			// arrSQLTerms[0]._objValue = "John Noor";
+
+			// arrSQLTerms[1]._strTableName = "Student";
+			// arrSQLTerms[1]._strColumnName= "gpa";
+			// arrSQLTerms[1]._strOperator = "=";
+			// arrSQLTerms[1]._objValue = new Double( 1.5 );
+
+			// String[]strarrOperators = new String[1];
+			// strarrOperators[0] = "OR";
+			// // select * from Student where name = "John Noor" or gpa = 1.5;
+			// Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
+		} catch (Exception exp) {
+			exp.printStackTrace();
+		}
 	}
-
 }

@@ -4,6 +4,7 @@ import java.lang.*;
 import java.util.*;
 import java.io.*;
 
+
 public class bplustree implements Serializable {
 	int m;
 	InternalNode root;
@@ -769,7 +770,7 @@ public class bplustree implements Serializable {
 	 * This class represents a general node within the B+ tree and serves as a
 	 * superclass of InternalNode and LeafNode.
 	 */
-	public class Node {
+	public class Node implements Serializable{
 		InternalNode parent;
 	}
 
@@ -778,7 +779,7 @@ public class bplustree implements Serializable {
 	 * all search/insert/delete operations. An internal node only holds keys; it
 	 * does not hold dictionary pairs.
 	 */
-	private class InternalNode extends Node {
+	private class InternalNode extends Node implements Serializable{
 		int maxDegree;
 		int minDegree;
 		int degree;
@@ -973,7 +974,7 @@ public class bplustree implements Serializable {
 	 * by m, the max degree of the B+ tree. The leaf nodes form a doubly linked
 	 * list that, i.e. each leaf node has a left and right sibling
 	 */
-	public class LeafNode extends Node {
+	public class LeafNode extends Node implements Serializable {
 		int maxNumPairs;
 		int minNumPairs;
 		int numPairs;
@@ -1105,7 +1106,7 @@ public class bplustree implements Serializable {
 	 * leaf nodes of the B+ tree. The class implements the Comparable interface
 	 * so that the DictionaryPair objects can be sorted later on.
 	 */
-	public class DictionaryPair implements Comparable<DictionaryPair> {
+	public class DictionaryPair implements Comparable<DictionaryPair>, Serializable{
 		int key;
 		double value;
 

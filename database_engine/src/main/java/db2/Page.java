@@ -38,7 +38,7 @@ public class Page implements Serializable {
     }
 
     public boolean isFull() {
-        return tuples.size() > N;
+        return tuples.size()>N;
     }
 
     public int AddTuple(Tuple tuple) {
@@ -48,20 +48,20 @@ public class Page implements Serializable {
     }
 
     public Tuple getTuple(int index) throws IOException {
-        return tuples.get(index);
+        return tuples.get(index-1);
     }
 
     public void deleteTuple(int index) {
-        tuples.remove(index);
+        tuples.remove(index-1);
         tupleCount--;
     }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (Tuple tuple : tuples) {
-            sb.append(tuple.toString()).append("   ,   ");
+            sb.append(tuple.toString()).append(" , ");
         }
-        sb.setLength(sb.length() - 5);
+        sb.setLength(sb.length() - 2);
         return sb.toString();
     }
 
