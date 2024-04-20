@@ -11,7 +11,7 @@ public class Page implements Serializable {
     private int PageId;
 
     public Page(int PageId) {
-        tupleCount = 1;
+        tupleCount = 0;
         tuples = new Vector<Tuple>();
         this.PageId = PageId;
         N = Tool.readPageSize("config//DBApp.properties");
