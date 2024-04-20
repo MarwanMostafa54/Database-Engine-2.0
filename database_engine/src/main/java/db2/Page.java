@@ -51,7 +51,7 @@ public class Page implements Serializable {
         return tuples.get(index - 1);
     }
 
-    public void deleteTuple(int index) {
+    public void nullifyTuple(int index) {
         tuples.set(index - 1, null);
         tupleCount--;
     }
