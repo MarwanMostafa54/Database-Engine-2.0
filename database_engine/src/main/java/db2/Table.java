@@ -14,6 +14,7 @@ public class Table implements Serializable {
     public Hashtable<String, bplustree> Indices;
     public int pageCount;
     public Hashtable<String,Hashtable<Integer,Vector<Double>>> duplicates;
+    
 
     public Table(String strTableName, String clusteringKey, Hashtable<String, String> htblColNameType)
             throws DBAppException {

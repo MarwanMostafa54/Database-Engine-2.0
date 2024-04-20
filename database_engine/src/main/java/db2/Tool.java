@@ -481,7 +481,8 @@ public class Tool {
     // MY MATH FUNCTION TO CREATE A ENCODER VALUE
     public static double encoder(int pageID, int tupleID) {
         double calculate = tupleID / (double) (Tool.readPageSize("config//DBApp.properties") + 1);
-        calculate += pageID;
+
+        calculate+=pageID;
         return calculate;
     }
 
@@ -491,7 +492,7 @@ public class Tool {
         int temp = (int) Math.floor(value); // Round down the double value to the nearest integer
         decode.add(temp);
         double decimalPart = value - Math.floor(value);
-        int Temptuple = (int) (decimalPart * (Tool.readPageSize("config//DBApp.properties") + 1));
+        int Temptuple = (int)   Math.round(decimalPart * (Tool.readPageSize("config//DBApp.properties") + 1));
         decode.add(Temptuple);
         return decode;
 
@@ -573,12 +574,37 @@ public String printRange(Table t, String columnName, bplustree tree, ArrayList<D
 }
 
 
-public static void UpdateBtrees(Table table,Hashtable<String,Object> Old,Hashtable<String,Object> New,int key){
+public static void UpdateBtrees(Table table,Hashtable<String,String> Old,Hashtable<String,Object> New,int key,ArrayList<String[]> metaData){
     for(String strColumnName : Old.keySet()){
         Double value;
-        if(table.getIndices().containsKey(strColumnName)){
+        if(table.getIndices().containsKey(strColumnName) && Old.containsKey(strColumnName)){
             bplustree tree=table.getIndices().get(strColumnName);
-            key=Old.get(strColumnName).hashCode();//OLd value to delete from table
+            String strClusteringKeyValue=Old.get(strColumnName);
+            Object identity = strClusteringKeyValue;
+            for (String[] data : metaData) {
+                // System.out.println(data[3]);
+                if (data[1].equals(strColumnName)) {
+                    // System.out.println("In");
+                    if (data[2].equalsIgnoreCase("java.lang.double")) {
+                        identity = Double.parseDouble(strClusteringKeyValue);
+                        // System.out.println(data[2]);
+                        break;
+                    }
+                    if (data[2].equalsIgnoreCase("java.lang.integer")) {
+                        identity = Integer.parseInt(strClusteringKeyValue);
+                        // System.out.println(data[2]);
+                        break;
+                    }
+    
+                }
+            }
+            if(identity==null){
+                System.out.println("why");
+            }
+            else{
+                System.out.println("tmam");
+            }
+            key=identity.hashCode();//OLd value to delete from table
             if(table.duplicates.containsKey(strColumnName) && table.duplicates.get(strColumnName).containsKey(key))
             {//Duplicates for this list exists
             Vector<Double> Values=table.duplicates.get(table.getClusterKey()).get(key); 
@@ -615,3 +641,4 @@ public static void UpdateBtrees(Table table,Hashtable<String,Object> Old,Hashtab
     }
 }
 }
+
