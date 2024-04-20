@@ -393,45 +393,61 @@ public class DBApp {
 				throw new DBAppException("Clustering key '" + table.getClusterKey() + "' value is missing.");
 			}
 
-			if (htblColNameValue.isEmpty()) {
-				Table table2 = Tool.deserializeTable(strTableName);
-				for (int i = 0; i < table2.getPageCount(); i++) {
-					table.deletePage(i);
-				}
-				Tool.serializeTable(table2);
-			} else {
-				SQLTerm[] sqlTerm = new SQLTerm[htblColNameValue.size()];
-				int i = 0;
-
-				for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
-					String columnName = entry.getKey();
-					Object columnValue = entry.getValue();
-					sqlTerm[i++] = new SQLTerm(strTableName, columnName, "=", columnValue);
-				}
-				String[] andSTR = { "AND" };
-				ArrayList<Tuple> toBeDeleted = new ArrayList<>();
-
-				Iterator<Tuple> iterator = selectFromTable(sqlTerm, andSTR);
-				while (iterator.hasNext()) {
-					Tuple tuple = iterator.next();
-					toBeDeleted.add(tuple);
-				}
-
-				for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
-					Page page = Tool.deserializePage(table, pageId);
-
-					for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
-						Tuple tuple = page.getTuple(tupleId);
-
-						for (int k = 0; k < toBeDeleted.size(); k++) {
-							if (((Tuple) toBeDeleted.get(k)).getTupleID() == tuple.getTupleID()) {
-								page.deleteTuple(tupleId);
+			boolean hasBPlus= false;
+			Hashtable<String, bplustree> indices = table.getIndices(); 
+			Set<String> keys=indices.keySet();
+			Set<String> coloumNames = htblColNameValue.keySet();
+			
+			for(String coloumName : coloumNames){
+				for(String key : keys){
+					if(key.equals(coloumName)){
+						indices.get(key).delete(htblColNameValue.get(coloumName).hashCode());
+						hasBPlus=true;
+						break;
+					}
+				}	
+					if(!hasBPlus){
+						if (htblColNameValue.isEmpty()) {
+							Table table2 = Tool.deserializeTable(strTableName);
+							for (int i = 0; i < table2.getPageCount(); i++) {
+								table.deletePage(i);
+							}
+							Tool.serializeTable(table2);
+						} else {
+							SQLTerm[] sqlTerm = new SQLTerm[htblColNameValue.size()];
+							int i = 0;
+			
+							Object columnValue = htblColNameValue.get(coloumName);
+							sqlTerm[i++] = new SQLTerm(strTableName, coloumName, "=", columnValue);
+							
+							String[] andSTR = { "AND" };
+							ArrayList<Tuple> toBeDeleted = new ArrayList<>();
+			
+							Iterator<Tuple> iterator = selectFromTable(sqlTerm, andSTR);
+							while (iterator.hasNext()) {
+								Tuple tuple = iterator.next();
+								toBeDeleted.add(tuple);
+							}
+			
+							for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
+								Page page = Tool.deserializePage(table, pageId);
+			
+								for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
+									Tuple tuple = page.getTuple(tupleId);
+			
+									for (int k = 0; k < toBeDeleted.size(); k++) {
+										if (((Tuple) toBeDeleted.get(k)).getTupleID() == tuple.getTupleID()) {
+											page.deleteTuple(tupleId);
+										}
+									}
+			
+								}
 							}
 						}
-
 					}
-				}
 			}
+
+			
 
 			Tool.serializeTable(table);
 		} catch (IOException e) {
@@ -441,37 +457,84 @@ public class DBApp {
 
 	// USE BTREE SEARCH RANGES for SERACH(MIN,MAX)
 	// THEN SORT ARRAYLIST TO DESERIALIZE ONE TIME
-	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
+	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException, IOException {
 		ArrayList<Tuple> filteredTuples = new ArrayList<>();
-
+		
 		for (int i = 0; i < arrSQLTerms.length; i++) {
 			String tableName = arrSQLTerms[i]._strTableName;
 			String columnName = arrSQLTerms[i]._strColumnName;
 			String operator = arrSQLTerms[i]._strOperator;
 			Object value = arrSQLTerms[i]._objValue;
 			Table table = Tool.deserializeTable(tableName);
-			ArrayList<Tuple> currentFilteredTuples = Tool.filterTuplesByOperator(table, columnName, operator, value);
-			if (i == 0) {
-				filteredTuples.addAll(currentFilteredTuples);
-			} else {
-				String logicalOperator = strarrOperators[i - 1];
-				switch (logicalOperator) {
-					case "AND":
-						filteredTuples.retainAll(currentFilteredTuples);
-						break;
-					case "OR":
-						filteredTuples.addAll(currentFilteredTuples);
-						break;
-					case "XOR":
-						List<Tuple> temp = new ArrayList<>(filteredTuples);
-						temp.removeAll(currentFilteredTuples);
-						currentFilteredTuples.removeAll(filteredTuples);
-						filteredTuples.addAll(temp);
-						filteredTuples.addAll(currentFilteredTuples);
-						break;
-					default:
+			Set<String> s1 = table.getIndices().keySet();
+			boolean flag = false;
+			for(String keys : s1){
+				if(keys.equals(columnName)){
+					flag = true;
+					break;
+				}
+			}
+			if(flag == true){
+				// If index exists, use B+ tree search
+				bplustree tree = table.getIndices().get(columnName);
+                ArrayList<Double> pageCodes = new ArrayList<>();
+				if (value instanceof Integer[]) {
+                Integer[] range = (Integer[]) value;
+                pageCodes = tree.search(range[1], range[0]);
+				}
+            	else {
+                throw new IllegalArgumentException("Value should be an Integer[] for range queries.");
+            }
+                ArrayList<Tuple> currentFilteredTuples = Tool.printRange(table, columnName, tree, pageCodes);
+                if (i == 0) {
+                    filteredTuples.addAll(currentFilteredTuples);
+                } else {
+                    String logicalOperator = strarrOperators[i - 1];
+                    switch (logicalOperator.toUpperCase()) {
+                        case "AND":
+                            filteredTuples.retainAll(currentFilteredTuples);
+                            break;
+                        case "OR":
+                            filteredTuples.addAll(currentFilteredTuples);
+                            break;
+                        case "XOR":
+                            List<Tuple> temp = new ArrayList<>(filteredTuples);
+                            temp.removeAll(currentFilteredTuples);
+                            currentFilteredTuples.removeAll(filteredTuples);
+                            filteredTuples.addAll(temp);
+                            filteredTuples.addAll(currentFilteredTuples);
+                            break;
+                        default:
+                            break;
+                    }
+				}
+				
+			}
+			else{
+				 // If index does not exist, filter tuples using operator
+				ArrayList<Tuple> currentFilteredTuples = Tool.filterTuplesByOperator(table, columnName, operator, value);
+				if (i == 0) {
+					filteredTuples.addAll(currentFilteredTuples);
+				} else {
+					String logicalOperator = strarrOperators[i - 1];
+					switch (logicalOperator) {
+						case "AND":
+							filteredTuples.retainAll(currentFilteredTuples);
+							break;
+						case "OR":
+							filteredTuples.addAll(currentFilteredTuples);
+							break;
+						case "XOR":
+							List<Tuple> temp = new ArrayList<>(filteredTuples);
+							temp.removeAll(currentFilteredTuples);
+							currentFilteredTuples.removeAll(filteredTuples);
+							filteredTuples.addAll(temp);
+							filteredTuples.addAll(currentFilteredTuples);
+							break;
+						default:
 
-						break;
+							break;
+					}
 				}
 			}
 		}

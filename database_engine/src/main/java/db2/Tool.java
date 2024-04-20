@@ -540,15 +540,15 @@ public static boolean CheckType(Hashtable<String, Object> htblColNameValue, Tabl
     }
     return true;
 }
-public String printRange(Table t, String columnName, bplustree tree, ArrayList<Double> pageCode) throws IOException{
-    StringBuilder tuples = new StringBuilder(); 
+public static ArrayList<Tuple> printRange(Table t, String columnName, bplustree tree, ArrayList<Double> pageCode) throws IOException{
+    ArrayList<Tuple> tuples = new ArrayList<>(); 
   
     for (Double code : pageCode) {
                
         ArrayList<Integer> temp = Tool.decoder(code); 
         Page p = deserializePage(t, temp.get(0));
         Tuple tuple = p.getTuple(temp.get(1));
-        tuples.append(tuple.toString()); 
+        tuples.add(tuple); 
         serializePage(t, p);   
     }
     if(t.duplicates.containsKey(columnName) ){
@@ -564,13 +564,13 @@ public String printRange(Table t, String columnName, bplustree tree, ArrayList<D
                 ArrayList<Integer> temp2 = Tool.decoder(v);
                 Page p = deserializePage(t, temp2.get(0));
                 Tuple tuple = p.getTuple(temp2.get(1));
-                tuples.append(tuple.toString()); 
+                tuples.add(tuple); 
                 serializePage(t, p); 
             }
         }
             
     }
-    return tuples.toString(); // Return the concatenated string
+    return tuples; // Return the concatenated string
 }
 
 
