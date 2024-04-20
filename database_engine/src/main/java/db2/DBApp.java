@@ -579,7 +579,6 @@ public class DBApp {
 			// System.out.println(Tool.encoder(1, 0));
 			// System.out.println(Tool.decoder(Tool.encoder(1, 2)));
 
-<<<<<<< HEAD
 			// htblColNameValue.clear();
 			// htblColNameValue.put("name", new String("MEEEE "));
 			// htblColNameValue.put("gpa", new Double(0.88));
@@ -598,7 +597,7 @@ public class DBApp {
 			htblColNameValue.put("gpa", new Double(0.88));
 			dbApp.updateTable(strTableName, "9", htblColNameValue);
 
-<<<<<<< HEAD
+
 			htblColNameValue.clear();
 			htblColNameValue.put("gpa", new Double(0.95));
 			dbApp.deleteFromTable(strTableName, htblColNameValue);
@@ -609,7 +608,7 @@ public class DBApp {
 			Object x = 0.95;
 			int key = x.hashCode();
 			System.out.println(table.getIndices().get("gpa").search(key));
-=======
+
 			// htblColNameValue.clear();
 			// htblColNameValue.put("gpa", new Double(0.95));
 			// dbApp.deleteFromTable(strTableName, htblColNameValue);
@@ -620,13 +619,12 @@ public class DBApp {
 			// Object x=0.95;
 			// int key=x.hashCode();
 			// System.out.println(table.getIndices().get("gpa").search(key));
->>>>>>> afd1f58faf1c48ac03d8a4e35abb932fab106fc4
+
 			// System.out.println(table.getPageCount());
 			for (int i = 1; i <= table.pageCount; i++) {
 				Page page = Tool.deserializePage(table, i);
 				System.out.println(page.toString());
 			}
->>>>>>> 8d701f02fae4ac178fc8dde03f648c52668965fe
 
 			// htblColNameValue.clear();
 			// htblColNameValue.clear();
