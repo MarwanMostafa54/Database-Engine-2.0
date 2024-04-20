@@ -388,7 +388,7 @@ public class Tool {
         ArrayList<Tuple> resultTuples = new ArrayList<>();
 
         for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
-            Page page = Tool.deserializePage(table, pageId);
+            Page page = deserializePage(table, pageId);
 
             for (Tuple tuple : page.getTuples()) {
                 String columnValue = tuple.getValue(columnName);
@@ -645,38 +645,4 @@ public class Tool {
         }
     }
 
-    public static Iterator selecting(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
-        ArrayList<Tuple> filteredTuples = new ArrayList<>();
-        for (int i = 0; i < arrSQLTerms.length; i++) {
-            String tableName = arrSQLTerms[i]._strTableName;
-            String columnName = arrSQLTerms[i]._strColumnName;
-            String operator = arrSQLTerms[i]._strOperator;
-            Object value = arrSQLTerms[i]._objValue;
-            Table table = Tool.deserializeTable(tableName);
-            ArrayList<Tuple> currentFilteredTuples = Tool.filterTuplesByOperator(table, columnName, operator, value);
-            if (i == 0) {
-                filteredTuples.addAll(currentFilteredTuples);
-            } else {
-                String logicalOperator = strarrOperators[i - 1];
-                switch (logicalOperator) {
-                    case "AND":
-                        filteredTuples.retainAll(currentFilteredTuples);
-                        break;
-                    case "OR":
-                        filteredTuples.addAll(currentFilteredTuples);
-                        break;
-                    case "XOR":
-                        List<Tuple> temp = new ArrayList<>(filteredTuples);
-                        temp.removeAll(currentFilteredTuples);
-                        currentFilteredTuples.removeAll(filteredTuples);
-                        filteredTuples.addAll(temp);
-                        filteredTuples.addAll(currentFilteredTuples);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-        return filteredTuples.iterator();
-    }
 }

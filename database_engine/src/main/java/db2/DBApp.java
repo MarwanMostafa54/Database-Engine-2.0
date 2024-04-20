@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Hashtable;
 
 //
@@ -413,7 +414,7 @@ public class DBApp {
 			String[] andSTR = new String[htblColNameValue.size() - 1];
 			Arrays.fill(andSTR, "AND");
 			ArrayList<Tuple> toBeDeleted = new ArrayList<>();
-			Iterator<Tuple> iterator = Tool.selecting(sqlTerms, andSTR);
+			Iterator<Tuple> iterator = selectFromTable(sqlTerms, andSTR);
 			while (iterator.hasNext()) {
 				toBeDeleted.add(iterator.next());
 			}
@@ -538,10 +539,10 @@ public class DBApp {
 			String strTableName = "Student";
 			DBApp dbApp = new DBApp();
 
-			Hashtable htblColNameType = new Hashtable();
-			htblColNameType.put("id", "java.lang.Integer");
-			htblColNameType.put("name", "java.lang.String");
-			htblColNameType.put("gpa", "java.lang.double");
+			// Hashtable htblColNameType = new Hashtable();
+			// htblColNameType.put("id", "java.lang.Integer");
+			// htblColNameType.put("name", "java.lang.String");
+			// htblColNameType.put("gpa", "java.lang.double");
 			// dbApp.createTable(strTableName, "id", htblColNameType);
 			// dbApp.createIndex(strTableName, "gpa", "GpaIndex");
 			
@@ -591,28 +592,27 @@ public class DBApp {
 			// Page page = Tool.deserializePage(table, i);
 			// System.out.println(page.toString());
 			// }
-=======
-			htblColNameValue.clear();
-			htblColNameValue.put("name", new String("nice "));
-			htblColNameValue.put("gpa", new Double(0.88));
-			dbApp.updateTable(strTableName, "9", htblColNameValue);
+			// htblColNameValue.clear();
+			// htblColNameValue.put("name", new String("nice "));
+			// htblColNameValue.put("gpa", new Double(0.88));
+			// dbApp.updateTable(strTableName, "9", htblColNameValue);
 
-
-			htblColNameValue.clear();
-			htblColNameValue.put("gpa", new Double(0.95));
-			dbApp.deleteFromTable(strTableName, htblColNameValue);
-			Table table = Tool.deserializeTable(strTableName);
-			if (table.getIndices().containsKey("gpa")) {
-				System.out.println("nice");
-			}
-			Object x = 0.95;
-			int key = x.hashCode();
-			System.out.println(table.getIndices().get("gpa").search(key));
 
 			// htblColNameValue.clear();
 			// htblColNameValue.put("gpa", new Double(0.95));
 			// dbApp.deleteFromTable(strTableName, htblColNameValue);
-			Table table = Tool.deserializeTable(strTableName);
+			// Table table = Tool.deserializeTable(strTableName);
+			// if (table.getIndices().containsKey("gpa")) {
+			// 	System.out.println("nice");
+			// }
+			// Object x = 0.95;
+			// int key = x.hashCode();
+			// System.out.println(table.getIndices().get("gpa").search(key));
+
+			// htblColNameValue.clear();
+			// htblColNameValue.put("gpa", new Double(0.95));
+			// dbApp.deleteFromTable(strTableName, htblColNameValue);
+			// Table table = Tool.deserializeTable(strTableName);
 			// if(table.getIndices().containsKey("gpa")){
 			// System.out.println("nice");
 			// }
@@ -621,10 +621,10 @@ public class DBApp {
 			// System.out.println(table.getIndices().get("gpa").search(key));
 
 			// System.out.println(table.getPageCount());
-			for (int i = 1; i <= table.pageCount; i++) {
-				Page page = Tool.deserializePage(table, i);
-				System.out.println(page.toString());
-			}
+			// for (int i = 1; i <= table.pageCount; i++) {
+			// 	Page page = Tool.deserializePage(table, i);
+			// 	System.out.println(page.toString());
+			// }
 
 			// htblColNameValue.clear();
 			// htblColNameValue.clear();
@@ -638,22 +638,29 @@ public class DBApp {
 			// System.out.println(page.toString());
 			// }
 
-			// SQLTerm[] arrSQLTerms;
-			// arrSQLTerms = new SQLTerm[5];
-			// arrSQLTerms[0]._strTableName = "Student";
-			// arrSQLTerms[0]._strColumnName= "name";
-			// arrSQLTerms[0]._strOperator = "=";
-			// arrSQLTerms[0]._objValue = "John Noor";
+			SQLTerm[] arrSQLTerms;
+			arrSQLTerms = new SQLTerm[2];
+			for(int i = 0 ; i < arrSQLTerms.length ; i++){
+				arrSQLTerms[i] = new SQLTerm();
+			}
+			arrSQLTerms[0]._strTableName = "Student";
+			arrSQLTerms[0]._strColumnName= "name";
+			arrSQLTerms[0]._strOperator = "=";
+			arrSQLTerms[0]._objValue = "jack";
 
-			// arrSQLTerms[1]._strTableName = "Student";
-			// arrSQLTerms[1]._strColumnName= "gpa";
-			// arrSQLTerms[1]._strOperator = "=";
-			// arrSQLTerms[1]._objValue = new Double( 1.5 );
+			arrSQLTerms[1]._strTableName = "Student";
+			arrSQLTerms[1]._strColumnName= "gpa";
+			arrSQLTerms[1]._strOperator = "<";
+			arrSQLTerms[1]._objValue = new Double( 1.6 );
 
-			// String[]strarrOperators = new String[1];
-			// strarrOperators[0] = "OR";
-			// // select * from Student where name = "John Noor" or gpa = 1.5;
-			// Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
+			String[]strarrOperators = new String[1];
+			strarrOperators[0] = "OR";
+			// select * from Student where name = "John Noor" or gpa = 1.5;
+			Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
+			while(resultSet.hasNext()){
+				System.out.println(resultSet.next());
+			}
+
 			// SQLTerm[] arrSQLTerms = new SQLTerm[2];
 			// arrSQLTerms[0] = new SQLTerm("Student", "name", "=", "John Noor");
 			// arrSQLTerms[1] = new SQLTerm("Student", "gpa", "=", 1.5);
