@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 
 //
@@ -372,9 +373,121 @@ public class DBApp {
 	// to identify which rows/tuples to delete.
 	// htblColNameValue enteries are ANDED together ??
 	// Delete Pages not coressponding to pagecount,make new vector
-	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException { // rework
-		try {
+	// public void deleteFromTable(String strTableName, Hashtable<String, Object>
+	// htblColNameValue) throws DBAppException { // rework
+	// try {
 
+	// Table table = Tool.deserializeTable(strTableName);
+
+	// if (table == null) {
+	// throw new DBAppException("Table '" + strTableName + "' does not exist.");
+	// }
+
+	// Set<String> tableColumnNames = Tool.getColumNameFromMetaData(strTableName);
+	// for (String columnName : htblColNameValue.keySet()) {
+	// if (!tableColumnNames.contains(columnName) && tableColumnNames.size() !=
+	// htblColNameValue.size()) {
+	// throw new DBAppException(
+	// "Column '" + columnName + "' does not exist in table or not equal size'" +
+	// strTableName
+	// + "'.");
+	// }
+	// }
+
+	// boolean hasBPlus = false;
+	// Hashtable<String, bplustree> indices = table.getIndices();
+	// Set<String> keys = indices.keySet();
+	// Set<String> coloumNames = htblColNameValue.keySet();
+	// boolean flag = true;
+	// System.out.println("out");
+
+	// System.out.println("in");
+	// SQLTerm[] sqlTerm = new SQLTerm[htblColNameValue.size()];
+	// int i = 0;
+	// for (String coloumName : coloumNames) {
+	// Object columnValue = htblColNameValue.get(coloumName);
+	// sqlTerm[i++] = new SQLTerm(strTableName, coloumName, "=", columnValue);
+	// }
+	// String[] andSTR = { "AND" };
+	// ArrayList<Tuple> toBeDeleted = new ArrayList<>();
+
+	// Iterator<Tuple> iterator = selectFromTable(sqlTerm, andSTR);
+	// while (iterator.hasNext()) {
+	// Tuple tuple = iterator.next();
+	// toBeDeleted.add(tuple);
+	// }
+	// for (String coloumName : coloumNames) {
+	// for (String key : keys) {
+	// System.out.println("iNDEX");
+	// if (key.equals(coloumName)) {
+	// if (htblColNameValue.isEmpty()) {
+	// if (flag) {
+	// System.out.println("eNTERED");
+	// indices.clear();
+	// for (int j = 0; j < table.getPageCount(); j++) {
+	// table.deletePage(j);
+	// }
+	// flag = false;
+	// }
+	// indices.put(key, new
+	// bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
+	// } else {
+	// if (indices.get(key).search(htblColNameValue.get(coloumName).hashCode()) !=
+	// null) {
+	// System.out.println("nOT eNTERED");
+	// double encode =
+	// indices.get(key).search(htblColNameValue.get(coloumName).hashCode());
+	// ArrayList<Integer> Location = Tool.decoder(encode);
+
+	// table.deleteTuple(Location.get(0), Location.get(1));
+	// // Get Duplicates of same key [VALUE,VALUE,VALUE] AND [VALUE2,VALUE2,VALUE2]
+	// AND
+	// // [VALUE,VALUE]
+	// // place in arraylist then AND with next ARRAYLIST
+
+	// indices.get(key).delete(htblColNameValue.get(coloumName).hashCode());
+	// hasBPlus = true;
+	// }
+	// }
+	// }
+	// }
+	// if (!hasBPlus) {
+	// System.out.println("idk");
+	// if (htblColNameValue.isEmpty()) {
+	// for (int j = 0; j < table.getPageCount(); j++) {
+	// table.deletePage(j);
+	// }
+
+	// } else {
+	// System.out.println("nOT eNTERED");
+
+	// for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
+	// Page page = Tool.deserializePage(table, pageId);
+
+	// for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
+	// Tuple tuple = page.getTuple(tupleId);
+
+	// for (int k = 0; k < toBeDeleted.size(); k++) {
+	// if (((Tuple) toBeDeleted.get(k)).getTupleID() == tuple.getTupleID()) {
+	// page.deleteTuple(tupleId);
+	// }
+	// }
+
+	// }
+	// }
+	// }
+	// }
+	// }
+
+	// Tool.serializeTable(table);
+	// } catch (IOException e) {
+	// throw new DBAppException("An error occurred while deleting from table: " +
+	// e.getMessage());
+	// }
+	// }
+
+	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+		try {
 			Table table = Tool.deserializeTable(strTableName);
 
 			if (table == null) {
@@ -383,93 +496,48 @@ public class DBApp {
 
 			Set<String> tableColumnNames = Tool.getColumNameFromMetaData(strTableName);
 			for (String columnName : htblColNameValue.keySet()) {
-				if (!tableColumnNames.contains(columnName) && tableColumnNames.size() != htblColNameValue.size()) {
+				if (!tableColumnNames.contains(columnName)) {
 					throw new DBAppException(
-							"Column '" + columnName + "' does not exist in table or not equal size'" + strTableName
-									+ "'.");
+							"Column '" + columnName + "' does not exist in table '" + strTableName + "'.");
 				}
 			}
-
-			boolean hasBPlus = false;
+			// Delete tuples matching the given conditions
+			SQLTerm[] sqlTerms = new SQLTerm[htblColNameValue.size()];
+			int i = 0;
+			for (Map.Entry<String, Object> entry : htblColNameValue.entrySet()) {
+				String columnName = entry.getKey();
+				Object columnValue = entry.getValue();
+				sqlTerms[i++] = new SQLTerm(strTableName, columnName, "=", columnValue);
+			}
+			String[] andSTR = new String[htblColNameValue.size() - 1];
+			Arrays.fill(andSTR, "AND");
+			ArrayList<Tuple> toBeDeleted = new ArrayList<>();
+			Iterator<Tuple> iterator = Tool.selecting(sqlTerms, andSTR);
+			while (iterator.hasNext()) {
+				toBeDeleted.add(iterator.next());
+			}
+			// Delete tuples from pages
+			if (htblColNameValue.isEmpty()) {
+				for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
+					table.deletePage(pageId);
+				}
+			} else {
+				for (Tuple tuple : toBeDeleted) {
+					ArrayList<Integer> Location = Tool.decoder(tuple.getTupleID());
+					table.deleteTuple(Location.get(0), Location.get(1));
+					// updatebtree locations
+				}
+			}
 			Hashtable<String, bplustree> indices = table.getIndices();
 			Set<String> keys = indices.keySet();
 			Set<String> coloumNames = htblColNameValue.keySet();
-			boolean flag = true;
-			System.out.println("out");
-			for (String coloumName : coloumNames) {
-				System.out.println("in");
-				for (String key : keys) {
-					System.out.println("iNDEX");
-					if (key.equals(coloumName)) {
-						if (htblColNameValue.isEmpty()) {
-							if (flag) {
-								System.out.println("eNTERED");
-								indices.clear();
-								for (int i = 0; i < table.getPageCount(); i++) {
-									table.deletePage(i);
-								}
-								flag = false;
-							}
-							indices.put(key, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
-						} else {
-							if (indices.get(key).search(htblColNameValue.get(coloumName).hashCode()) != null) {
-								System.out.println("nOT eNTERED");
-								double encode = indices.get(key).search(htblColNameValue.get(coloumName).hashCode());
-								ArrayList<Integer> Location = Tool.decoder(encode);
-								
-								table.deleteTuple(Location.get(0), Location.get(1));
-								//Get Duplicates of same key [VALUE,VALUE,VALUE]  AND [VALUE2,VALUE2,VALUE2] AND [VALUE,VALUE]
-								//place in arraylist then AND with next ARRAYLIST
-								
-								indices.get(key).delete(htblColNameValue.get(coloumName).hashCode());
-								hasBPlus = true;
-								
-							}
-						}
-					}
-				}
-				if (!hasBPlus) {
-					System.out.println("idk");
-					if (htblColNameValue.isEmpty()) {
-						for (int i = 0; i < table.getPageCount(); i++) {
-							table.deletePage(i);
-						}
-
-					} else {
-						System.out.println("nOT eNTERED");
-						SQLTerm[] sqlTerm = new SQLTerm[htblColNameValue.size()];
-						int i = 0;
-
-						Object columnValue = htblColNameValue.get(coloumName);
-						sqlTerm[i++] = new SQLTerm(strTableName, coloumName, "=", columnValue);
-
-						String[] andSTR = { "AND" };
-						ArrayList<Tuple> toBeDeleted = new ArrayList<>();
-
-						Iterator<Tuple> iterator = selectFromTable(sqlTerm, andSTR);
-						while (iterator.hasNext()) {
-							Tuple tuple = iterator.next();
-							toBeDeleted.add(tuple);
-						}
-
-						for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
-							Page page = Tool.deserializePage(table, pageId);
-
-							for (int tupleId = 1; tupleId <= page.getTuples().size(); tupleId++) {
-								Tuple tuple = page.getTuple(tupleId);
-
-								for (int k = 0; k < toBeDeleted.size(); k++) {
-									if (((Tuple) toBeDeleted.get(k)).getTupleID() == tuple.getTupleID()) {
-										page.deleteTuple(tupleId);
-									}
-								}
-
-							}
-						}
-					}
-				}
+			if (htblColNameValue.isEmpty()) {
+				indices.clear();
+			} else {
+				
 			}
 
+			// Serialize the updated table
 			Tool.serializeTable(table);
 		} catch (IOException e) {
 			throw new DBAppException("An error occurred while deleting from table: " + e.getMessage());
@@ -616,20 +684,20 @@ public class DBApp {
 			// htblColNameValue.put("gpa", new Double(0.88));
 			// dbApp.updateTable(strTableName, "123", htblColNameValue);
 
-			 htblColNameValue.clear();
-			  htblColNameValue.put("gpa", new Double(0.95));
+			htblColNameValue.clear();
+			htblColNameValue.put("gpa", new Double(0.95));
 			dbApp.deleteFromTable(strTableName, htblColNameValue);
 			Table table = Tool.deserializeTable(strTableName);
-			if(table.getIndices().containsKey("gpa")){
+			if (table.getIndices().containsKey("gpa")) {
 				System.out.println("nice");
 			}
-			Object x=0.95;
-			int key=x.hashCode();
+			Object x = 0.95;
+			int key = x.hashCode();
 			System.out.println(table.getIndices().get("gpa").search(key));
-			//System.out.println(table.getPageCount());
+			// System.out.println(table.getPageCount());
 			for (int i = 1; i <= table.pageCount; i++) {
-			Page page = Tool.deserializePage(table, i);
-			System.out.println(page.toString());
+				Page page = Tool.deserializePage(table, i);
+				System.out.println(page.toString());
 			}
 
 			// htblColNameValue.clear();

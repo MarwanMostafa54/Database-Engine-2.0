@@ -15,6 +15,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -361,7 +363,8 @@ public class Tool {
         }
 
         catch (Exception E) {
-            System.out.println("Failed to update metadata.csv! Try Again and Check that No extra Empty Lines in CSV File");
+            System.out.println(
+                    "Failed to update metadata.csv! Try Again and Check that No extra Empty Lines in CSV File");
             E.printStackTrace();
         }
     }
@@ -482,7 +485,7 @@ public class Tool {
     public static double encoder(int pageID, int tupleID) {
         double calculate = tupleID / (double) (Tool.readPageSize("config//DBApp.properties") + 1);
 
-        calculate+=pageID;
+        calculate += pageID;
         return calculate;
     }
 
@@ -492,7 +495,7 @@ public class Tool {
         int temp = (int) Math.floor(value); // Round down the double value to the nearest integer
         decode.add(temp);
         double decimalPart = value - Math.floor(value);
-        int Temptuple = (int)   Math.round(decimalPart * (Tool.readPageSize("config//DBApp.properties") + 1));
+        int Temptuple = (int) Math.round(decimalPart * (Tool.readPageSize("config//DBApp.properties") + 1));
         decode.add(Temptuple);
         return decode;
 
@@ -509,136 +512,171 @@ public class Tool {
         }
         Tool.serializeTable(table);
     }
-public static boolean CheckType(Hashtable<String, Object> htblColNameValue, Table table){
-    ArrayList<String[]> metaData=Tool.readMetaData(table.getTableName());
-    for(String[] item:metaData){
-        if(htblColNameValue.containsKey(item[1])){
-        Object temp=htblColNameValue.get(item[1]);
-        if (temp == null) {
-            return false;
-        }
-        switch(item[2].toLowerCase()){
-             case "java.lang.string":
-                    if(!(temp instanceof String)){
-                        return false;
-                    }
-             break;
 
-             case "java.lang.double":
-             if(!(temp instanceof Integer|| temp instanceof Double)){
-                return false;
-             }
-             break;
-
-             case "java.lang.integer":
-             if(!(temp instanceof Integer)){
-                return false;
-             }
-             break;
-        }
-    }
-    }
-    return true;
-}
-public static ArrayList<Tuple> printRange(Table t, String columnName, bplustree tree, ArrayList<Double> pageCode) throws IOException{
-    ArrayList<Tuple> tuples = new ArrayList<>(); 
-  
-    for (Double code : pageCode) {
-               
-        ArrayList<Integer> temp = Tool.decoder(code); 
-        Page p = deserializePage(t, temp.get(0));
-        Tuple tuple = p.getTuple(temp.get(1));
-        tuples.add(tuple); 
-        serializePage(t, p);   
-    }
-    if(t.duplicates.containsKey(columnName) ){
-        Hashtable<Integer,Vector<Double>> duplicate = t.duplicates.get(columnName);
-        Set<Map.Entry<Integer,Vector<Double>>> entrySet = duplicate.entrySet();
-
-    for (Map.Entry<Integer,Vector<Double>> entry : entrySet) {
-        Integer key = entry.getKey();
-        Vector<Double> value = entry.getValue();
-        if(tree.search(key) != null  && pageCode.contains(tree.search(key))) 
-            for (Double v : value){
-                
-                ArrayList<Integer> temp2 = Tool.decoder(v);
-                Page p = deserializePage(t, temp2.get(0));
-                Tuple tuple = p.getTuple(temp2.get(1));
-                tuples.add(tuple); 
-                serializePage(t, p); 
-            }
-        }
-            
-    }
-    return tuples; // Return the concatenated string
-}
-
-
-public static void UpdateBtrees(Table table,Hashtable<String,String> Old,Hashtable<String,Object> New,int key,ArrayList<String[]> metaData){
-    for(String strColumnName : Old.keySet()){
-        Double value;
-        if(table.getIndices().containsKey(strColumnName) && Old.containsKey(strColumnName)){
-            bplustree tree=table.getIndices().get(strColumnName);
-            String strClusteringKeyValue=Old.get(strColumnName);
-            Object identity = strClusteringKeyValue;
-            for (String[] data : metaData) {
-                // System.out.println(data[3]);
-                if (data[1].equals(strColumnName)) {
-                    // System.out.println("In");
-                    if (data[2].equalsIgnoreCase("java.lang.double")) {
-                        identity = Double.parseDouble(strClusteringKeyValue);
-                        // System.out.println(data[2]);
+    public static boolean CheckType(Hashtable<String, Object> htblColNameValue, Table table) {
+        ArrayList<String[]> metaData = Tool.readMetaData(table.getTableName());
+        for (String[] item : metaData) {
+            if (htblColNameValue.containsKey(item[1])) {
+                Object temp = htblColNameValue.get(item[1]);
+                if (temp == null) {
+                    return false;
+                }
+                switch (item[2].toLowerCase()) {
+                    case "java.lang.string":
+                        if (!(temp instanceof String)) {
+                            return false;
+                        }
                         break;
-                    }
-                    if (data[2].equalsIgnoreCase("java.lang.integer")) {
-                        identity = Integer.parseInt(strClusteringKeyValue);
-                        // System.out.println(data[2]);
+
+                    case "java.lang.double":
+                        if (!(temp instanceof Integer || temp instanceof Double)) {
+                            return false;
+                        }
                         break;
+
+                    case "java.lang.integer":
+                        if (!(temp instanceof Integer)) {
+                            return false;
+                        }
+                        break;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static ArrayList<Tuple> printRange(Table t, String columnName, bplustree tree, ArrayList<Double> pageCode)
+            throws IOException {
+        ArrayList<Tuple> tuples = new ArrayList<>();
+
+        for (Double code : pageCode) {
+
+            ArrayList<Integer> temp = Tool.decoder(code);
+            Page p = deserializePage(t, temp.get(0));
+            Tuple tuple = p.getTuple(temp.get(1));
+            tuples.add(tuple);
+            serializePage(t, p);
+        }
+        if (t.duplicates.containsKey(columnName)) {
+            Hashtable<Integer, Vector<Double>> duplicate = t.duplicates.get(columnName);
+            Set<Map.Entry<Integer, Vector<Double>>> entrySet = duplicate.entrySet();
+
+            for (Map.Entry<Integer, Vector<Double>> entry : entrySet) {
+                Integer key = entry.getKey();
+                Vector<Double> value = entry.getValue();
+                if (tree.search(key) != null && pageCode.contains(tree.search(key)))
+                    for (Double v : value) {
+
+                        ArrayList<Integer> temp2 = Tool.decoder(v);
+                        Page p = deserializePage(t, temp2.get(0));
+                        Tuple tuple = p.getTuple(temp2.get(1));
+                        tuples.add(tuple);
+                        serializePage(t, p);
                     }
-    
-                }
-            }
-            if(identity==null){
-                System.out.println("why");
-            }
-            else{
-                System.out.println("tmam");
-            }
-            key=identity.hashCode();//OLd value to delete from table
-            if(table.duplicates.containsKey(strColumnName) && table.duplicates.get(strColumnName).containsKey(key))
-            {//Duplicates for this list exists
-            Vector<Double> Values=table.duplicates.get(table.getClusterKey()).get(key); 
-            value=Values.get(Values.size()-1);
-            Values.remove(Values.size()-1);
-            //Removed old vlaue from Btree which was updated
-
-            } 
-            else{//No duplicates change one on Search
-                value=tree.search(key);
-                tree.delete(key);
             }
 
-            key=New.get(strColumnName).hashCode();
-            if (table.getIndices().get(strColumnName).search(key) != null) {
-                // Check Duplicate Again
-                if (!table.duplicates.containsKey(strColumnName)) {
-                    // If not, create a new inner hashtable for the key
-                    table.duplicates.put(strColumnName, new Hashtable<Integer, Vector<Double>>());
+        }
+        return tuples; // Return the concatenated string
+    }
+
+    public static void UpdateBtrees(Table table, Hashtable<String, String> Old, Hashtable<String, Object> New, int key,
+            ArrayList<String[]> metaData) {
+        for (String strColumnName : Old.keySet()) {
+            Double value;
+            if (table.getIndices().containsKey(strColumnName) && Old.containsKey(strColumnName)) {
+                bplustree tree = table.getIndices().get(strColumnName);
+                String strClusteringKeyValue = Old.get(strColumnName);
+                Object identity = strClusteringKeyValue;
+                for (String[] data : metaData) {
+                    // System.out.println(data[3]);
+                    if (data[1].equals(strColumnName)) {
+                        // System.out.println("In");
+                        if (data[2].equalsIgnoreCase("java.lang.double")) {
+                            identity = Double.parseDouble(strClusteringKeyValue);
+                            // System.out.println(data[2]);
+                            break;
+                        }
+                        if (data[2].equalsIgnoreCase("java.lang.integer")) {
+                            identity = Integer.parseInt(strClusteringKeyValue);
+                            // System.out.println(data[2]);
+                            break;
+                        }
+
+                    }
                 }
-                Hashtable<Integer, Vector<Double>> innerHashtable = table.duplicates.get(strColumnName);
-                // Check if the inner hashtable already contains the key
-                if (!innerHashtable.containsKey(key)) {
-                    // If not, create a new vector for the key
-                    innerHashtable.put(key, new Vector<Double>());
+                if (identity == null) {
+                    System.out.println("why");
+                } else {
+                    System.out.println("tmam");
                 }
-                // Get the vector associated with the key
-                Vector<Double> vector = innerHashtable.get(key);
-                vector.add(value);
+                key = identity.hashCode();// OLd value to delete from table
+                if (table.duplicates.containsKey(strColumnName)
+                        && table.duplicates.get(strColumnName).containsKey(key)) {// Duplicates for this list exists
+                    Vector<Double> Values = table.duplicates.get(table.getClusterKey()).get(key);
+                    value = Values.get(Values.size() - 1);
+                    Values.remove(Values.size() - 1);
+                    // Removed old vlaue from Btree which was updated
+
+                } else {// No duplicates change one on Search
+                    value = tree.search(key);
+                    tree.delete(key);
+                }
+
+                key = New.get(strColumnName).hashCode();
+                if (table.getIndices().get(strColumnName).search(key) != null) {
+                    // Check Duplicate Again
+                    if (!table.duplicates.containsKey(strColumnName)) {
+                        // If not, create a new inner hashtable for the key
+                        table.duplicates.put(strColumnName, new Hashtable<Integer, Vector<Double>>());
+                    }
+                    Hashtable<Integer, Vector<Double>> innerHashtable = table.duplicates.get(strColumnName);
+                    // Check if the inner hashtable already contains the key
+                    if (!innerHashtable.containsKey(key)) {
+                        // If not, create a new vector for the key
+                        innerHashtable.put(key, new Vector<Double>());
+                    }
+                    // Get the vector associated with the key
+                    Vector<Double> vector = innerHashtable.get(key);
+                    vector.add(value);
+                } else {
+                    table.getIndices().get(strColumnName).insert(key, value);
+                }
+            }
+        }
+    }
+
+    public static Iterator selecting(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
+        ArrayList<Tuple> filteredTuples = new ArrayList<>();
+        for (int i = 0; i < arrSQLTerms.length; i++) {
+            String tableName = arrSQLTerms[i]._strTableName;
+            String columnName = arrSQLTerms[i]._strColumnName;
+            String operator = arrSQLTerms[i]._strOperator;
+            Object value = arrSQLTerms[i]._objValue;
+            Table table = Tool.deserializeTable(tableName);
+            ArrayList<Tuple> currentFilteredTuples = Tool.filterTuplesByOperator(table, columnName, operator, value);
+            if (i == 0) {
+                filteredTuples.addAll(currentFilteredTuples);
             } else {
-                table.getIndices().get(strColumnName).insert(key, value);
+                String logicalOperator = strarrOperators[i - 1];
+                switch (logicalOperator) {
+                    case "AND":
+                        filteredTuples.retainAll(currentFilteredTuples);
+                        break;
+                    case "OR":
+                        filteredTuples.addAll(currentFilteredTuples);
+                        break;
+                    case "XOR":
+                        List<Tuple> temp = new ArrayList<>(filteredTuples);
+                        temp.removeAll(currentFilteredTuples);
+                        currentFilteredTuples.removeAll(filteredTuples);
+                        filteredTuples.addAll(temp);
+                        filteredTuples.addAll(currentFilteredTuples);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
+        return filteredTuples.iterator();
     }
 }
-}
-

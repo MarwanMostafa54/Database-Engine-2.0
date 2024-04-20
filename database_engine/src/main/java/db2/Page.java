@@ -38,7 +38,7 @@ public class Page implements Serializable {
     }
 
     public boolean isFull() {
-        return tuples.size()>=N;
+        return tuples.size() >= N;
     }
 
     public int AddTuple(Tuple tuple) {
@@ -48,11 +48,11 @@ public class Page implements Serializable {
     }
 
     public Tuple getTuple(int index) throws IOException {
-        return tuples.get(index-1);
+        return tuples.get(index - 1);
     }
 
     public void deleteTuple(int index) {
-        tuples.remove(index-1);
+        tuples.set(index - 1, null);
         tupleCount--;
     }
 
