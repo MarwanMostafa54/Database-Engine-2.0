@@ -506,7 +506,7 @@ public class Tool {
     public static void shiftPages(int pageID, Table t) {
         Table table = Tool.deserializeTable(t.getTableName());
 
-        for (int i = pageID; i <= table.getPageCount(); i++) {
+        for (int i = pageID+1; i <= table.getPageCount(); i++) {
             Page page = Tool.deserializePage(table, i);
             int newPageID = i - 1;
             page.setPageID(newPageID);
