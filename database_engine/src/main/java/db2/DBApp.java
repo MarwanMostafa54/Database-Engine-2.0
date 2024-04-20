@@ -254,7 +254,13 @@ public class DBApp {
 					sqlTerm[i++] = new SQLTerm(strTableName, columnName, "=", columnValue);
 				}
 				String[] andSTR = { "AND" };
-				ArrayList toBeDeleted = (ArrayList) selectFromTable(sqlTerm, andSTR);
+				ArrayList<Tuple> toBeDeleted = new ArrayList<>();
+
+				Iterator<Tuple> iterator = selectFromTable(sqlTerm, andSTR);
+				while (iterator.hasNext()) {
+					Tuple tuple = iterator.next();
+					toBeDeleted.add(tuple);
+				}
 
 				for (int pageId = 1; pageId <= table.getPageCount(); pageId++) {
 					Page page = Tool.deserializePage(table, pageId);
