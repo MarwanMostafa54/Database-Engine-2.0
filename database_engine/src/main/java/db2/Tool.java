@@ -679,4 +679,20 @@ public class Tool {
         }
         return filteredTuples.iterator();
     }
+
+    public static String getIndexName(String col) {
+        String ColumName = "";
+        try (BufferedReader br = new BufferedReader(new FileReader("data//metadata.csv"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 2 && parts[1].equals(col)) {
+                    ColumName = (parts[4]);
+                }
+            }
+        } catch (Exception e) {
+
+        }
+        return ColumName;
+    }
 }
