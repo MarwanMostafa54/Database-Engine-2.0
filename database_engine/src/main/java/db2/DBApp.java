@@ -63,52 +63,34 @@ public class DBApp {
 			if (!Tool.checker(metaData, strColName)) {
 				throw new DBAppException("Column " + strColName + "  name does not exist");
 			}
-
-			else {
-				Table t = Tool.deserializeTable(strTableName);
-				if (t.Indices.containsKey(strColName) && (strColName.equals(t.getClusterKey()))) {
-					throw new DBAppException("Column " + strColName + " is the Clustering Key,Already sorted.");
-				}
-				if (t.Indices.containsKey(strColName)) {
-					throw new DBAppException("Column " + strColName + " index already created.");
-				}
-
-				t.addIndex(strColName, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
-				for (int i = 1; i <= t.getPageCount(); i++) {
-					Page p = Tool.deserializePage(t, i);
-					int j = 0;
-					for (Tuple tuple : p.getTuples()) {
-						int key = tuple.getValue(strColName).hashCode();
-						j++;
-						Double encoder = Tool.encoder(i, j);
-						// Important I dont add the original unique value to duplicate onloy keep record
-						// of its duplicates
-						// So when Updating/Deleting I should check first if there is duplicate and
-						// delete/update duplicate instead of original
-						// value in my B+Tree
-						if (t.getIndices().get(strColName).search(key) != null) {
-							// Check Duplicate Again
-							if (!t.duplicates.containsKey(strColName)) {
-								// If not, create a new inner hashtable for the key
-								t.duplicates.put(strColName, new Hashtable<Integer, Vector<Double>>());
-							}
-							Hashtable<Integer, Vector<Double>> innerHashtable = t.duplicates.get(strColName);
-							// Check if the inner hashtable already contains the key
-							if (!innerHashtable.containsKey(key)) {
-								// If not, create a new vector for the key
-								innerHashtable.put(key, new Vector<Double>());
-							}
-							// Get the vector associated with the key
-							Vector<Double> vector = innerHashtable.get(key);
-							vector.add(encoder);
-						} else {
-							t.getIndices().get(strColName).insert(key, encoder);
-						}
+			Table t = Tool.deserializeTable(strTableName);
+			if (t.Indices.containsKey(strColName) && (strColName.equals(t.getClusterKey()))) {
+				throw new DBAppException("Column " + strColName + " is the Clustering Key,Already sorted.");
+			}
+			if (t.Indices.containsKey(strColName)) {
+				throw new DBAppException("Column " + strColName + " index already created.");
+			}
+			t.addIndex(strColName, new bplustree(Tool.readBtreeOrder("config/DBApp.properties")));
+			for (int i = 1; i <= t.getPageCount(); i++) {
+				Page p = Tool.deserializePage(t, i);
+				int j = 0;
+				for (Tuple tuple : p.getTuples()) {
+					int key = tuple.getValue(strColName).hashCode();
+					j++;
+					Double encoder = Tool.encoder(i, j);
+					// Important I dont add the original unique value to duplicate onloy keep record
+					// of its duplicates
+					// So when Updating/Deleting I should check first if there is duplicate and
+					// delete/update duplicate instead of original
+					// value in my B+Tree
+					if (t.getIndices().get(strColName).search(key) != null) {
+						t.getIndices().get(strColName).insert(key, encoder);
 					}
 				}
-				Tool.updateMetaData(strTableName, strColName, strIndexName);
-				Tool.serializeTable(t);
 			}
+			Tool.updateMetaData(strTableName, strColName, strIndexName);
+			Tool.serializeTable(t);
+
 		} else {
 			throw new DBAppException("Table is not Found in Meta Data");
 		}
@@ -173,36 +155,17 @@ public class DBApp {
 
 			for (String strColumnName : htblColNameValue.keySet()) {
 				if (table.getIndices().containsKey(strColumnName) && table.getPageCount() > 0) {
-					int key = htblColNameValue.get(strColumnName).hashCode();
+					int key = tuple.getColumnValue(strColumnName).hashCode();
 					Page page = Tool.deserializePage(table, table.getPageCount());
-					System.out.println(table.getPageCount());
-					double encoder = Tool.encoder(table.getPageCount(), page.gettupleCount());// gettupleCount()returns
-																								// last inserted
-																								// tuple tupleid is
-																								// the next one
+					// System.out.println(table.getPageCount());
+					double encoder = Tool.encoder(page.getPageID(), page.gettupleCount());// gettupleCount()returns
+																							// last inserted
+																							// tuple tupleid is
+																							// the next one
 					System.out.println("PageId" + table.getPageCount());
 					System.out.println(("TupleId" + page.gettupleCount()));
 					System.out.println("Encoded" + encoder);
-					Double searchResult = table.getIndices().get(strColumnName).search(key);
-					if (searchResult != null) {
-						// Check Duplicate Again
-						if (!table.duplicates.containsKey(strColumnName)) {
-							// If not, create a new inner hashtable for the key
-							table.duplicates.put(strColumnName, new Hashtable<Integer, Vector<Double>>());
-						}
-						Hashtable<Integer, Vector<Double>> innerHashtable = table.duplicates.get(strColumnName);
-						// Check if the inner hashtable already contains the key
-						if (!innerHashtable.containsKey(key)) {
-							// If not, create a new vector for the key
-							innerHashtable.put(key, new Vector<Double>());
-						}
-						// Get the vector associated with the key
-						Vector<Double> vector = innerHashtable.get(key);
-						vector.add(encoder);
-					} else {
-						System.out.println("insert");
-						table.getIndices().get(strColumnName).insert(key, encoder);
-					}
+					table.getIndices().get(strColumnName).insert(key, encoder);
 				}
 			}
 			Tool.serializeTable(table);
@@ -248,8 +211,8 @@ public class DBApp {
 
 		try {
 			Tuple old;
-			Hashtable<String, String> OldEntries = new Hashtable<>();
 			Table table = Tool.deserializeTable(strTableName);
+			
 			Hashtable<String, Object> temp = new Hashtable<>();
 			temp.put(table.getClusterKey(), identity);
 			if (!Tool.CheckType(htblColNameValue, table)) {
@@ -262,103 +225,41 @@ public class DBApp {
 			if (htblColNameValue.containsKey(table.getClusterKey())) {
 				throw new DBAppException("Clustering key included in my htblColNameValue");
 			}
-			int key = identity.hashCode();
-
+			htblColNameValue.put(table.getClusterKey(),strClusteringKeyValue);
+			Tuple tuple = new Tuple(htblColNameValue, 0);
+			System.out.println("1");
+			int key = tuple.getColumnValue(table.getClusterKey()).hashCode();
+			System.out.println("2");
 			bplustree tree = table.getIndices().get(table.getClusterKey());
 			System.out.println("done");
-			if (tree.search(key) == null || tree.search(key) == 0) {
+			if (tree.search(key, key) == null || tree.search(key) == null) {
 				throw new DBAppException("Clustering Key Value Does Not Exist");
 			}
+			ArrayList<Double> values = tree.search(key, key);
+			double value = values.get(0);
+			ArrayList<Integer> decode = Tool.decoder(value);
+			// System.out.println(decode.get(0));
+			// System.out.println(decode.get(1));
+			Page page = Tool.deserializePage(table, decode.get(0));
+			old = page.getTuple(decode.get(1));
+			System.out.println(old.toString());
 
-			if (table.duplicates.containsKey(table.getClusterKey())) {
-				System.out.println("enters");
-				if (table.duplicates.get(table.getClusterKey()).containsKey(key)) {
-					// Duplicates for this list exist
-					Vector<Double> Values = table.duplicates.get(table.getClusterKey()).get(key);
-					Double value = Values.get(Values.size() - 1);
-					ArrayList<Integer> decode = Tool.decoder(value);
-					Page page = Tool.deserializePage(table, decode.get(0));
-					old = page.getTuple(decode.get(1));
-					OldEntries = old.getTupleInfo();
-					page.getTuple(decode.get(1)).updateTuple(htblColNameValue, table.getClusterKey());
-					Tool.serializePage(table, page);
-				}
-			} else {
-				// No duplicates, change one on Search
-				System.out.println("enters");
-				Double value = tree.search(key);
-				System.out.println(value);
-				ArrayList<Integer> decode = Tool.decoder(value);
-				System.out.println(decode.get(0));
-				System.out.println(decode.get(1));
-				Page page = Tool.deserializePage(table, decode.get(0));
-
-				old = page.getTuple(decode.get(1));
-				System.out.println(old.toString());
-				if (old.getHashtable() == null) {
-					System.err.println("error");
-				}
-				if (old.getTupleInfo() == null) {
-					System.err.println("error");
-				}
-				OldEntries = old.getTupleInfo();
-				System.out.println("continue");
-				old.updateTuple(htblColNameValue, table.getClusterKey());
-				System.out.println(old.toString());
-				Tool.serializePage(table, page);
-			}
-
+			old.updateTuple(htblColNameValue, table.getClusterKey());
+			System.out.println(old.toString());
+			Tool.serializePage(table, page);
+			System.out.println("ok");
 			for (String Key : table.getIndices().keySet()) {
 				if (!(Key.equals(table.getClusterKey()))) {
-					String IndexUsed = OldEntries.get(Key);
-					Object identity2 = strClusteringKeyValue;
-					for (String[] data : metaData) {
-						// System.out.println(data[3]);
-						// System.out.println("In");
-						if (data[2].equalsIgnoreCase("java.lang.double")) {
-							identity = Double.parseDouble(strClusteringKeyValue);
-							// System.out.println(data[2]);
-							break;
-						}
-						if (data[2].equalsIgnoreCase("java.lang.integer")) {
-							identity = Integer.parseInt(strClusteringKeyValue);
-							// System.out.println(data[2]);
-							break;
-						}
-					}
-					int key2 = identity2.hashCode();
-					double value;
-					if (table.duplicates.containsKey(Key) && table.duplicates.get(Key).containsKey(key)) {// Duplicates
-																											// for this
-																											// list
-																											// exists
-						Vector<Double> Values = table.duplicates.get(table.getClusterKey()).get(key);
-						value = Values.get(Values.size() - 1);
-						Values.remove(Values.size() - 1);
-						// Removed old vlaue from Btree which was updated
-					} else {// No duplicates change one on Search
-						value = tree.search(key);
-						tree.delete(key);
-					}
-					if (table.getIndices().get(Key).search(key) != null) {
+					int key1 = tuple.getColumnValue(Key).hashCode();
+					// double temp = tree.search(key1);
+					// tree.delete(key1);
+					if (table.getIndices().get(Key).search(key1) != null) {
 						// Check Duplicate Again
-						if (!table.duplicates.containsKey(Key)) {
-							// If not, create a new inner hashtable for the key
-							table.duplicates.put(Key, new Hashtable<Integer, Vector<Double>>());
-						}
-						Hashtable<Integer, Vector<Double>> innerHashtable = table.duplicates.get(Key);
-						// Check if the inner hashtable already contains the key
-						if (!innerHashtable.containsKey(key2)) {
-							// If not, create a new vector for the key
-							innerHashtable.put(key2, new Vector<Double>());
-						}
-						// Get the vector associated with the key
-						Vector<Double> vector = innerHashtable.get(key2);
-						vector.add(value);
-					} else {
-						table.getIndices().get(Key).insert(key2, value);
+						double x = table.getIndices().get(Key).search(key1);
+						table.getIndices().get(Key).delete(key1);
+						int key2 = old.getColumnValue(Key).hashCode();
+						table.getIndices().get(Key).insert(key2, x);
 					}
-
 				}
 			}
 			Tool.serializeTable(table);
@@ -416,14 +317,15 @@ public class DBApp {
 								System.out.println("nOT eNTERED");
 								double encode = indices.get(key).search(htblColNameValue.get(coloumName).hashCode());
 								ArrayList<Integer> Location = Tool.decoder(encode);
-								
+
 								table.deleteTuple(Location.get(0), Location.get(1));
-								//Get Duplicates of same key [VALUE,VALUE,VALUE]  AND [VALUE2,VALUE2,VALUE2] AND [VALUE,VALUE]
-								//place in arraylist then AND with next ARRAYLIST
-								
+								// Get Duplicates of same key [VALUE,VALUE,VALUE] AND [VALUE2,VALUE2,VALUE2] AND
+								// [VALUE,VALUE]
+								// place in arraylist then AND with next ARRAYLIST
+
 								indices.get(key).delete(htblColNameValue.get(coloumName).hashCode());
 								hasBPlus = true;
-								
+
 							}
 						}
 					}
@@ -571,10 +473,10 @@ public class DBApp {
 			String strTableName = "Student";
 			DBApp dbApp = new DBApp();
 
-			// Hashtable htblColNameType = new Hashtable();
-			// htblColNameType.put("id", "java.lang.Integer");
-			// htblColNameType.put("name", "java.lang.String");
-			// htblColNameType.put("gpa", "java.lang.double");
+			Hashtable htblColNameType = new Hashtable();
+			htblColNameType.put("id", "java.lang.Integer");
+			htblColNameType.put("name", "java.lang.String");
+			htblColNameType.put("gpa", "java.lang.double");
 			// dbApp.createTable(strTableName, "id", htblColNameType);
 			// dbApp.createIndex(strTableName, "gpa", "GpaIndex");
 
@@ -611,22 +513,22 @@ public class DBApp {
 			// System.out.println(Tool.encoder(1, 0));
 			// System.out.println(Tool.decoder(Tool.encoder(1, 2)));
 
-			// htblColNameValue.clear();
-			// htblColNameValue.put("name", new String("Why "));
-			// htblColNameValue.put("gpa", new Double(0.88));
-			// dbApp.updateTable(strTableName, "123", htblColNameValue);
+			htblColNameValue.clear();
+			htblColNameValue.put("name", new String("nice "));
+			htblColNameValue.put("gpa", new Double(0.88));
+			dbApp.updateTable(strTableName, "9", htblColNameValue);
 
-			 htblColNameValue.clear();
-			  htblColNameValue.put("gpa", new Double(0.95));
-			dbApp.deleteFromTable(strTableName, htblColNameValue);
+			// htblColNameValue.clear();
+			// htblColNameValue.put("gpa", new Double(0.95));
+			// dbApp.deleteFromTable(strTableName, htblColNameValue);
 			Table table = Tool.deserializeTable(strTableName);
-			if(table.getIndices().containsKey("gpa")){
-				System.out.println("nice");
-			}
-			Object x=0.95;
-			int key=x.hashCode();
-			System.out.println(table.getIndices().get("gpa").search(key));
-			//System.out.println(table.getPageCount());
+			// if(table.getIndices().containsKey("gpa")){
+			// System.out.println("nice");
+			// }
+			// Object x=0.95;
+			// int key=x.hashCode();
+			// System.out.println(table.getIndices().get("gpa").search(key));
+			// System.out.println(table.getPageCount());
 			for (int i = 1; i <= table.pageCount; i++) {
 			Page page = Tool.deserializePage(table, i);
 			System.out.println(page.toString());
